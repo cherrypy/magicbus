@@ -17,5 +17,5 @@ try:
     del win32
 except ImportError:
     from processbus.wspbus import Bus
-    bus = Bus
+    bus = Bus()
 
