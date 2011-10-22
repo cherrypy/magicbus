@@ -4,7 +4,7 @@ import os
 import signal as _signal
 import sys
 
-from processbus._compat import basestring
+from magicbus._compat import basestring
 
 
 class SignalHandler(object):
@@ -20,9 +20,9 @@ class SignalHandler(object):
                    }
     
     The :func:`SignalHandler.handle_SIGHUP`` method calls
-    :func:`bus.restart()<processbus.wspbus.Bus.restart>`
+    :func:`bus.restart()<magicbus.wspbus.Bus.restart>`
     if the process is daemonized, but
-    :func:`bus.exit()<processbus.wspbus.Bus.exit>`
+    :func:`bus.exit()<magicbus.wspbus.Bus.exit>`
     if the process is attached to a TTY. This is because Unix window
     managers tend to send SIGHUP to terminal windows when the user closes them.
     

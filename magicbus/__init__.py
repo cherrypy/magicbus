@@ -11,11 +11,11 @@ for each class.
 """
 
 try:
-    from processbus import win32
+    from magicbus import win32
     bus = win32.Win32Bus()
     bus.console_control_handler = win32.ConsoleCtrlHandler(bus)
     del win32
 except ImportError:
-    from processbus.wspbus import Bus
+    from magicbus.wspbus import Bus
     bus = Bus()
 

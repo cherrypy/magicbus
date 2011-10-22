@@ -4,8 +4,8 @@ import os
 import sys
 import threading
 
-from processbus.plugins import SimplePlugin
-from processbus._compat import basestring, ntob
+from magicbus.plugins import SimplePlugin
+from magicbus._compat import basestring, ntob
 
 
 try:

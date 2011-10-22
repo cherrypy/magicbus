@@ -1,4 +1,4 @@
-"""Compatibility code for using processbus with various versions of Python.
+"""Compatibility code for using magicbus with various versions of Python.
 
 Process Bus 3.3 is compatible with Python versions 2.3+. This module provides a
 useful abstraction over the differences between Python versions, sometimes by
@@ -43,6 +43,12 @@ try:
     set = set
 except NameError:
     from sets import Set as set
+
+try:
+    from httplib import BadStatusLine
+except ImportError:
+    # Python 3
+    from http.client import BadStatusLine
 
 import threading
 if hasattr(threading.Thread, "daemon"):

@@ -7,7 +7,7 @@ import win32event
 import win32service
 import win32serviceutil
 
-from processbus import wspbus, plugins
+from magicbus import wspbus, plugins
 
 
 class ConsoleCtrlHandler(plugins.SimplePlugin):
@@ -157,18 +157,18 @@ class PyWebService(win32serviceutil.ServiceFramework):
     _svc_description_ = "Python Web Service"
     
     def SvcDoRun(self):
-        import processbus
-        processbus.bus.start()
-        processbus.bus.block()
+        import magicbus
+        magicbus.bus.start()
+        magicbus.bus.block()
     
     def SvcStop(self):
-        import processbus
+        import magicbus
         self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
-        processbus.bus.exit()
+        magicbus.bus.exit()
     
     def SvcOther(self, control):
-        import processbus
-        processbus.bus.publish(control_codes.key_for(control))
+        import magicbus
+        magicbus.bus.publish(control_codes.key_for(control))
 
 
 if __name__ == '__main__':

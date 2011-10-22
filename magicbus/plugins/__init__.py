@@ -5,7 +5,7 @@ class SimplePlugin(object):
     """Plugin base class which auto-subscribes methods for known channels."""
     
     bus = None
-    """A :class:`Bus <processbus.wspbus.Bus>`."""
+    """A :class:`Bus <magicbus.wspbus.Bus>`."""
     
     def __init__(self, bus):
         self.bus = bus

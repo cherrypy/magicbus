@@ -2,7 +2,7 @@
 
     python setup.py install
 
-* To run the regression tests, just go to the processbus/test/ directory and type:
+* To run the regression tests, just go to the magicbus/test/ directory and type:
 
     nosetests -s ./
 

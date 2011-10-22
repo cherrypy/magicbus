@@ -1,4 +1,4 @@
-"""Installs processbus using distutils
+"""Installs magicbus using distutils
 
 Run:
     python setup.py install
@@ -20,7 +20,7 @@ import re
 ###############################################################################
 # arguments for the setup command
 ###############################################################################
-name = "ProcessBus"
+name = "MagicBus"
 version = "3.3.0alpha"
 desc = "An implementation of the Web Site Process Bus"
 long_desc = "The Process Bus is a publish/subscribe architecture that loosely connects components with services."
@@ -42,14 +42,14 @@ author_email="team@cherrypy.org"
 url="http://www.cherrypy.org"
 cp_license="BSD"
 packages=[
-    "processbus", "processbus.plugins",
-    "processbus.test",
+    "magicbus", "magicbus.plugins",
+    "magicbus.test",
 ]
-download_url="http://download.cherrypy.org/processbus/3.3.0alpha/"
+download_url="http://download.cherrypy.org/magicbus/3.3.0alpha/"
 data_files=[
-    ('processbus', ['processbus/LICENSE.txt']),
-    ('processbus/plugins', []),
-    ('processbus/test', []),
+    ('magicbus', ['magicbus/LICENSE.txt']),
+    ('magicbus/plugins', []),
+    ('magicbus/test', []),
 ]
 
 if sys.version_info >= (3, 0):
@@ -61,7 +61,7 @@ else:
 # end arguments for setup
 ###############################################################################
 
-# wininst may install data_files in Python/x.y instead of the processbus package.
+# wininst may install data_files in Python/x.y instead of the magicbus package.
 # Django's solution is at http://code.djangoproject.com/changeset/8313
 # See also http://mail.python.org/pipermail/distutils-sig/2004-August/004134.html
 if 'bdist_wininst' in sys.argv or '--format=wininst' in sys.argv:

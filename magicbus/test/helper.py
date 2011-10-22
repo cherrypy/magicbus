@@ -1,4 +1,4 @@
-"""A library of helper functions for the processbus test suite."""
+"""A library of helper functions for the magicbus test suite."""
 
 import os
 thisdir = os.path.abspath(os.path.dirname(__file__))
@@ -6,7 +6,7 @@ thisdir = os.path.abspath(os.path.dirname(__file__))
 import sys
 import time
 
-from processbus._compat import basestring, ntob
+from magicbus._compat import basestring, ntob
 
 # --------------------------- Spawning helpers --------------------------- #
 

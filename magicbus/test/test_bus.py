@@ -2,8 +2,8 @@ import threading
 import time
 import unittest
 
-from processbus._compat import get_daemon, set
-from processbus import wspbus
+from magicbus._compat import get_daemon, set
+from magicbus import wspbus
 
 
 msg = "Listener %d on channel %s: %s."

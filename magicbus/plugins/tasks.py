@@ -6,8 +6,8 @@ import sys
 import time
 import threading
 
-from processbus.plugins import SimplePlugin
-from processbus._compat import get_daemon, get_thread_ident, set
+from magicbus.plugins import SimplePlugin
+from magicbus._compat import get_daemon, get_thread_ident, set
 
 # _module__file__base is used by Autoreload to make
 # absolute any filenames retrieved from sys.modules which are not
@@ -101,7 +101,7 @@ class Monitor(SimplePlugin):
     """The time in seconds between callback runs."""
     
     thread = None
-    """A :class:`BackgroundTask<processbus.plugins.BackgroundTask>` thread."""
+    """A :class:`BackgroundTask<magicbus.plugins.tasks.BackgroundTask>` thread."""
     
     def __init__(self, bus, callback, frequency=60, name=None):
         SimplePlugin.__init__(self, bus)
@@ -158,9 +158,9 @@ class Autoreloader(Monitor):
     ``match`` attribute, a regular expression. For example, to stop monitoring
     the bus itself::
     
-        bus.autoreload.match = r'^(?!processbus).+'
+        bus.autoreload.match = r'^(?!magicbus).+'
     
-    Like all :class:`Monitor<processbus.plugins.Monitor>` plugins,
+    Like all :class:`Monitor<magicbus.plugins.tasks.Monitor>` plugins,
     the autoreload plugin takes a ``frequency`` argument. The default is
     1 second; that is, the autoreloader will examine files once each second.
     """

@@ -1,4 +1,4 @@
-from processbus._compat import BadStatusLine, ntob
+from magicbus._compat import BadStatusLine, ntob
 import os
 import sys
 import threading

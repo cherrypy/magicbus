@@ -68,7 +68,7 @@ import time
 import traceback as _traceback
 import warnings
 
-from processbus._compat import set
+from magicbus._compat import set
 
 # Here I save the value of os.getcwd(), which, if I am imported early enough,
 # will be the directory from which the startup script was run.  This is needed

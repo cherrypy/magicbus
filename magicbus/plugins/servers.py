@@ -18,7 +18,7 @@ FastCGI/SCGI
 ============
 
 There are also Flup\ **F**\ CGIServer and Flup\ **S**\ CGIServer classes in
-:mod:`processbus.plugins.servers`. To start an fcgi server, for example,
+:mod:`magicbus.plugins.servers`. To start an fcgi server, for example,
 wrap an instance of it in a ServerAdapter::
 
     addr = ('0.0.0.0', 4000)
