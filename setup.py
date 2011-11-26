@@ -12,10 +12,7 @@ except ImportError:
     from distutils.core import setup
 
 from distutils.command.install import INSTALL_SCHEMES
-from distutils.command.build_py import build_py
 import sys
-import os
-import re
 
 ###############################################################################
 # arguments for the setup command
@@ -52,11 +49,6 @@ data_files=[
     ('magicbus/test', []),
 ]
 
-if sys.version_info >= (3, 0):
-    required_python_version = '3.0'
-else:
-    required_python_version = '2.3'
-
 ###############################################################################
 # end arguments for setup
 ###############################################################################
@@ -68,9 +60,9 @@ if 'bdist_wininst' in sys.argv or '--format=wininst' in sys.argv:
     data_files = [(r'\PURELIB\%s' % path, files) for path, files in data_files]
 
 def main():
-    if sys.version < required_python_version:
-        s = "I'm sorry, but %s %s requires Python %s or later."
-        print(s % (name, version, required_python_version))
+    if sys.version < '2.4':
+        s = "I'm sorry, but %s %s requires Python 2.4 or later."
+        print(s % (name, version))
         sys.exit(1)
     # set default location for "data_files" to
     # platform specific "site-packages" location

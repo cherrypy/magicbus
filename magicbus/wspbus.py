@@ -176,6 +176,18 @@ class Bus(object):
             listeners.discard(callback)
             del self._priorities[(channel, callback)]
     
+    def clear(self):
+        """Discard all subscribed callbacks."""
+        self.execv = False
+        self.state = states.STOPPED
+        # Use items() as a snapshot instead of while+pop so that callers
+        # can be slightly lax in subscribing new listeners while the old
+        # ones are being removed.
+        for channel, listeners in self.listeners.items():
+            for callback in list(listeners):
+                listeners.discard(callback)
+                del self._priorities[(channel, callback)]
+    
     def publish(self, channel, *args, **kwargs):
         """Return output of all subscribers for the given channel."""
         if channel not in self.listeners:
