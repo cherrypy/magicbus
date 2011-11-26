@@ -148,6 +148,7 @@ class Bus(object):
     
     states = states
     state = states.STOPPED
+    debug = False
     execv = False
     max_cloexec_files = max_files
     
@@ -158,6 +159,7 @@ class Bus(object):
             [(channel, set()) for channel
              in ('start', 'stop', 'exit', 'graceful', 'log', 'main')])
         self._priorities = {}
+        self.debug = False
     
     def subscribe(self, channel, callback, priority=None):
         """Add the given callback at the given channel (if not present)."""
@@ -206,7 +208,14 @@ class Bus(object):
             items.sort()
         for priority, listener in items:
             try:
-                output.append(listener(*args, **kwargs))
+                if self.debug and channel != 'log':
+                    self.log("Publishing to %s: %s(*%s, **%s)" %
+                             (channel, listener, args, kwargs))
+                result = listener(*args, **kwargs)
+                if self.debug and channel != 'log':
+                    self.log("Publishing to %s: %s(*%s, **%s) = %s" %
+                             (channel, listener, args, kwargs, result))
+                output.append(result)
             except KeyboardInterrupt:
                 raise
             except SystemExit:

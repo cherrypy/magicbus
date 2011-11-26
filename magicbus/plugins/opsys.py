@@ -3,6 +3,7 @@
 import os
 import sys
 import threading
+import time
 
 from magicbus.plugins import SimplePlugin
 from magicbus._compat import basestring, ntob
@@ -241,4 +242,22 @@ class PIDFile(SimplePlugin):
             raise
         except:
             pass
+    
+    def wait(self, timeout=None, poll_interval=0.1):
+        """Return when the PID file exists, or the timeout expires."""
+        starttime = time.time()
+        while timeout is None or time.time() - starttime <= timeout:
+            if os.path.exists(self.pidfile):
+                return
+            time.sleep(poll_interval)
+    
+    def join(self, timeout=None, poll_interval=0.1):
+        """Return when the PID file does not exist, or the timeout expires."""
+        starttime = time.time()
+        while timeout is None or time.time() - starttime <= timeout:
+            if not os.path.exists(self.pidfile):
+                return
+            time.sleep(poll_interval)
+
+
 

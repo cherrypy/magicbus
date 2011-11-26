@@ -50,6 +50,16 @@ except ImportError:
     # Python 3
     from http.client import BadStatusLine
 
+try:
+    from http.server import HTTPServer, BaseHTTPRequestHandler as HTTPHandler
+except ImportError:
+    from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler as HTTPHandler
+
+try:
+    from http.client import HTTPConnection
+except ImportError:
+    from httplib import HTTPConnection
+
 import threading
 if hasattr(threading.Thread, "daemon"):
     # Python 2.6+
