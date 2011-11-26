@@ -58,21 +58,26 @@ class SignalHandler(object):
             self.handlers['SIGINT'] = self._jython_SIGINT_handler
 
         self._previous_handlers = {}
-    
+
     def _jython_SIGINT_handler(self, signum=None, frame=None):
         # See http://bugs.jython.org/issue1313
         self.bus.log('Keyboard Interrupt: shutting down bus')
         self.bus.exit()
-        
+
     def subscribe(self):
+        self.bus.subscribe('start', self.subscribe_handlers)
+
+    def subscribe_handlers(self):
         """Subscribe self.handlers to signals."""
         for sig, func in self.handlers.items():
             try:
                 self.set_handler(sig, func)
             except ValueError:
                 pass
-    
-    def unsubscribe(self):
+    # Only run after Daemonizer.start
+    subscribe_handlers.priority = 70
+
+    def unsubscribe_handlers(self):
         """Unsubscribe self.handlers from signals."""
         for signum, handler in self._previous_handlers.items():
             signame = self.signals[signum]
@@ -126,7 +131,7 @@ class SignalHandler(object):
         signame = self.signals[signum]
         self.bus.log("Caught signal %s." % signame)
         self.bus.publish(signame)
-    
+
     def handle_SIGHUP(self):
         """Restart if daemonized, else exit."""
         if os.isatty(sys.stdin.fileno()):

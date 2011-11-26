@@ -31,7 +31,7 @@ class TestOpsys(object):
 
     def test_daemonize(self):
         if os.name not in ['posix']:
-            return self.skip("skipped (not on posix) ")
+            return "skipped (not on posix)"
 
         # Spawn the process and wait, when this returns, the original process
         # is finished.  If it daemonized properly, we should still be able

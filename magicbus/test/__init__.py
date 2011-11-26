@@ -12,6 +12,10 @@ def assertEqual(x, y, msg=None):
     if not x == y:
         raise AssertionError(msg or "%r != %r" % (x, y))
 
+def assertNotEqual(x, y, msg=None):
+    if x == y:
+        raise AssertionError(msg or "%r == %r" % (x, y))
+
 
 class Process(object):
 

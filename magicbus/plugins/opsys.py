@@ -244,11 +244,11 @@ class PIDFile(SimplePlugin):
             pass
     
     def wait(self, timeout=None, poll_interval=0.1):
-        """Return when the PID file exists, or the timeout expires."""
+        """Return the PID when the file exists, or None when timeout expires."""
         starttime = time.time()
         while timeout is None or time.time() - starttime <= timeout:
             if os.path.exists(self.pidfile):
-                return
+                return int(open(self.pidfile, 'rb').read())
             time.sleep(poll_interval)
     
     def join(self, timeout=None, poll_interval=0.1):
@@ -258,6 +258,4 @@ class PIDFile(SimplePlugin):
             if not os.path.exists(self.pidfile):
                 return
             time.sleep(poll_interval)
-
-
 
