@@ -6,8 +6,8 @@ If you need to start more than one HTTP server (to serve on multiple ports, or
 protocols, etc.), you can manually register each one and then start them all
 with bus.start::
 
-    s1 = ServerAdapter(bus, MyWSGIServer(host='0.0.0.0', port=80))
-    s2 = ServerAdapter(bus, another.HTTPServer(host='127.0.0.1', SSL=True))
+    s1 = ServerPlugin(bus, MyWSGIServer(host='0.0.0.0', port=80))
+    s2 = ServerPlugin(bus, another.HTTPServer(host='127.0.0.1', SSL=True))
     s1.subscribe()
     s2.subscribe()
     bus.start()
@@ -19,11 +19,11 @@ FastCGI/SCGI
 
 There are also Flup\ **F**\ CGIServer and Flup\ **S**\ CGIServer classes in
 :mod:`magicbus.plugins.servers`. To start an fcgi server, for example,
-wrap an instance of it in a ServerAdapter::
+wrap an instance of it in a ServerPlugin::
 
     addr = ('0.0.0.0', 4000)
     f = servers.FlupFCGIServer(application=mywsgiapp, bindAddress=addr)
-    s = servers.ServerAdapter(bus, httpserver=f, bind_addr=addr)
+    s = servers.ServerPlugin(bus, httpserver=f, bind_addr=addr)
     s.subscribe()
 
 Note that you need to download and install `flup <http://trac.saddi.com/flup>`_
@@ -81,19 +81,36 @@ Please see `Lighttpd FastCGI Docs
 of the possible configuration options.
 """
 
+import socket
 import sys
+import threading
 import time
 
 
-class ServerAdapter(object):
-    """Adapter for an HTTP server.
+class ServerPlugin(object):
+    """Bus plugin for an HTTP server.
+    
+    You don't have to use this plugin; you can make your own that listens on
+    the appropriate bus channels. This one is designed to:
+
+        * wrap HTTP servers whose accept loop blocks by running it in a
+          separate thread; any exceptions in it exit the bus
+        * wait until the server is truly ready to receive requests before
+          returning from the bus.start listener
+        * wait until the server has finished processing requestss before
+          returning from the bus.stop listener
+        * log server start/stop via the bus
+
+    The httpserver argument MUST possess 'start' and 'stop' methods,
+    and a 'ready' boolean attribute which is True when the HTTP server
+    is ready to receive requests on its socket.
     
     If you need to start more than one HTTP server (to serve on multiple
     ports, or protocols, etc.), you can manually register each one and then
     start them all with bus.start:
     
-        s1 = ServerAdapter(bus, MyWSGIServer(host='0.0.0.0', port=80))
-        s2 = ServerAdapter(bus, another.HTTPServer(host='127.0.0.1', SSL=True))
+        s1 = ServerPlugin(bus, MyWSGIServer(host='0.0.0.0', port=80))
+        s2 = ServerPlugin(bus, another.HTTPServer(host='127.0.0.1', SSL=True))
         s1.subscribe()
         s2.subscribe()
         bus.start()
@@ -136,7 +153,6 @@ class ServerAdapter(object):
         if isinstance(self.bind_addr, tuple):
             wait_for_free_port(*self.bind_addr)
         
-        import threading
         t = threading.Thread(target=self._start_http_thread)
         t.setName("HTTPServer " + t.getName())
         t.start()
@@ -203,6 +219,10 @@ class ServerAdapter(object):
         self.start()
 
 
+
+# ------- Wrappers for various HTTP servers for use with ServerPlugin ------- #
+
+
 class FlupCGIServer(object):
     """Adapter for a flup.server.cgi.WSGIServer."""
    
@@ -231,7 +251,6 @@ class FlupFCGIServer(object):
     
     def __init__(self, *args, **kwargs):
         if kwargs.get('bindAddress', None) is None:
-            import socket
             if not hasattr(socket, 'fromfd'):
                 raise ValueError(
                     'Dynamic FCGI server not available on this platform. '
@@ -307,6 +326,10 @@ class FlupSCGIServer(object):
         self.scgiserver._threadPool.maxSpare = 0
 
 
+
+# ---------------------------- Utility functions ---------------------------- #
+
+
 def client_host(server_host):
     """Return the host on which a client can connect to the given listener."""
     if server_host == '0.0.0.0':
@@ -324,8 +347,6 @@ def check_port(host, port, timeout=1.0):
         raise ValueError("Host values of '' or None are not allowed.")
     host = client_host(host)
     port = int(port)
-    
-    import socket
     
     # AF_INET or AF_INET6 socket
     # Get the correct address family for our host (allows IPv6 addresses)

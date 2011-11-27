@@ -1,7 +1,7 @@
 from magicbus._compat import ntob
 from magicbus import bus
 from magicbus.plugins import tasks
-from magicbus.test import assertEqual, Counter, WebService, WebHandler
+from magicbus.test import assertEqual, WebAdapter, WebService, WebHandler
 
 
 class Handler(WebHandler):
@@ -25,8 +25,8 @@ class TestTasks(object):
     def test_thread_manager(self):
         bus.clear()
 
-        service = WebService(bus, handler_class=Handler)
-        service.subscribe()
+        service = WebService(handler_class=Handler)
+        WebAdapter(bus, service).subscribe()
 
         tm = tasks.ThreadManager(bus)
         tm.subscribe()
@@ -36,7 +36,7 @@ class TestTasks(object):
         bus.start()
         try:
             assertEqual(bus.state, bus.states.STARTED)
-            assertEqual(service.running, True)
+            assertEqual(service.ready, True)
             assertEqual(len(tm.threads), 0)
 
             assertEqual(service.do_GET("/").read(), ntob("Hello World"))

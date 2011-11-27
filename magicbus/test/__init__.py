@@ -7,6 +7,8 @@ from magicbus._compat import HTTPServer, HTTPConnection, HTTPHandler
 from subprocess import Popen
 import threading
 
+from magicbus.plugins import SimplePlugin
+
 
 def assertEqual(x, y, msg=None):
     if not x == y:
@@ -43,32 +45,29 @@ class WebServer(HTTPServer):
         # Sigh. Really, standard library, really? Double underscores?
         self._BaseServer__shutdown_request = True
 
+    def handle_error(self, request, client_address):
+        # Simulate unsafe servers that don't trap errors well
+        raise
+
 
 class WebService(object):
 
-    def __init__(self, bus, address=('127.0.0.1', 8000), handler_class=None):
-        self.bus = bus
+    def __init__(self, address=('127.0.0.1', 8000), handler_class=None):
         self.address = address
         self.handler_class = handler_class
         self.httpd = None
-        self.running = False
-
-    def subscribe(self):
-        self.bus.subscribe('start', self.start)
-        self.bus.subscribe('stop', self.stop)
+        self.ready = False
 
     def start(self):
         self.httpd = WebServer(self.address, self.handler_class)
-        threading.Thread(target=self.httpd.serve_forever).start()
-        self.running = True
-    # Make sure we start httpd after the daemonizer.
-    start.priority = 75
+        self.ready = True
+        self.httpd.serve_forever()
 
     def stop(self):
         if self.httpd is not None:
             self.httpd.stop()
-        self.running = False
-    stop.priority = 25
+        self.httpd = None
+        self.ready = False
 
     def do_GET(self, uri):
         conn = HTTPConnection(*self.address)
@@ -77,6 +76,22 @@ class WebService(object):
             return conn.getresponse()
         finally:
             conn.close()
+
+
+class WebAdapter(SimplePlugin):
+
+    def __init__(self, bus, service):
+        self.bus = bus
+        self.service = service
+
+    def start(self):
+        threading.Thread(target=self.service.start).start()
+    # Make sure we start httpd after the daemonizer.
+    start.priority = 75
+
+    def stop(self):
+        self.service.stop()
+    stop.priority = 25
 
 
 class WebHandler(HTTPHandler):
@@ -103,37 +118,4 @@ class WebHandler(HTTPHandler):
     def handle(self, *args, **kwargs):
         self.bus.publish('acquire_thread')
         HTTPHandler.handle(self, *args, **kwargs)
-
-
-class Counter(object):
-
-    def __init__(self, bus):
-        self.bus = bus
-        self.running = False
-        self.startcount = 0
-        self.gracecount = 0
-        self.threads = {}
-
-    def subscribe(self):
-        self.bus.subscribe('start', self.start)
-        self.bus.subscribe('stop', self.stop)
-        self.bus.subscribe('graceful', self.graceful)
-        self.bus.subscribe('start_thread', self.startthread)
-        self.bus.subscribe('stop_thread', self.stopthread)
-
-    def start(self):
-        self.running = True
-        self.startcount += 1
-
-    def stop(self):
-        self.running = False
-
-    def graceful(self):
-        self.gracecount += 1
-
-    def startthread(self, thread_id):
-        self.threads[thread_id] = None
-
-    def stopthread(self, thread_id):
-        del self.threads[thread_id]
 

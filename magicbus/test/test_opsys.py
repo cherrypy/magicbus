@@ -5,7 +5,7 @@ import sys
 
 from magicbus import bus
 from magicbus.plugins import loggers, opsys
-from magicbus.test import assertEqual, Process, WebService, WebHandler
+from magicbus.test import assertEqual, Process, WebAdapter, WebService, WebHandler
 
 #loggers.StdoutLogger(bus).subscribe()
 pidfile = opsys.PIDFile(bus, os.path.join(thismodule + ".pid"))
@@ -24,7 +24,7 @@ class Handler(WebHandler):
             self.bus.exit()
         else:
             self.respond(status=404)
-service = WebService(bus, handler_class=Handler)
+service = WebService(handler_class=Handler)
 
 
 class TestOpsys(object):
@@ -64,7 +64,7 @@ if __name__ == '__main__':
     if mode == 'daemonize':
         opsys.Daemonizer(bus).subscribe()
     pidfile.subscribe()
-    service.subscribe()
+    WebAdapter(bus, service).subscribe()
     bus.start()
     bus.block()
 
