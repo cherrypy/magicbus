@@ -1,9 +1,9 @@
 from magicbus import bus
-from magicbus.wspbus import ChannelFailures
-from magicbus.plugins import loggers, servers
+from magicbus.plugins import servers
 from magicbus.test import assertEqual, WebService, WebHandler
 
-#loggers.StdoutLogger(bus).subscribe()
+# from magicbus.plugins import loggers
+# loggers.StdoutLogger(bus).subscribe()
 
 
 class Handler(WebHandler):
@@ -35,4 +35,3 @@ class TestServers(object):
         assertEqual(resp.status, 200)
         bus.block()
         assertEqual(bus.state, bus.states.EXITING)
-

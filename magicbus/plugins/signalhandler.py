@@ -20,9 +20,9 @@ class SignalHandler(object):
                    }
     
     The :func:`SignalHandler.handle_SIGHUP`` method calls
-    :func:`bus.restart()<magicbus.wspbus.Bus.restart>`
+    :func:`bus.restart()<magicbus.Bus.restart>`
     if the process is daemonized, but
-    :func:`bus.exit()<magicbus.wspbus.Bus.exit>`
+    :func:`bus.exit()<magicbus.Bus.exit>`
     if the process is attached to a TTY. This is because Unix window
     managers tend to send SIGHUP to terminal windows when the user closes them.
     

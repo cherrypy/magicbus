@@ -1,4 +1,4 @@
-"""Operating system interaction for the Process Bus."""
+"""Operating system interaction for a Bus."""
 
 import os
 import sys
@@ -124,7 +124,7 @@ class DropPrivileges(SimplePlugin):
 class Daemonizer(SimplePlugin):
     """Daemonize the running script.
     
-    Use this with a Web Site Process Bus via::
+    Use this with a Bus via::
     
         Daemonizer(bus).subscribe()
     

@@ -3,7 +3,7 @@ import time
 import unittest
 
 from magicbus._compat import get_daemon, set
-from magicbus import wspbus
+from magicbus import Bus, ChannelFailures
 
 
 msg = "Listener %d on channel %s: %s."
@@ -17,7 +17,7 @@ class PublishSubscribeTests(unittest.TestCase):
         return listener
 
     def test_builtin_channels(self):
-        b = wspbus.Bus()
+        b = Bus()
 
         self.responses, expected = [], []
 
@@ -34,7 +34,7 @@ class PublishSubscribeTests(unittest.TestCase):
         self.assertEqual(self.responses, expected)
 
     def test_custom_channels(self):
-        b = wspbus.Bus()
+        b = Bus()
 
         self.responses, expected = [], []
 
@@ -52,7 +52,7 @@ class PublishSubscribeTests(unittest.TestCase):
         self.assertEqual(self.responses, expected)
 
     def test_listener_errors(self):
-        b = wspbus.Bus()
+        b = Bus()
 
         self.responses, expected = [], []
         channels = [c for c in b.listeners if c != 'log']
@@ -63,7 +63,7 @@ class PublishSubscribeTests(unittest.TestCase):
             b.subscribe(channel, lambda: None, priority=20)
 
         for channel in channels:
-            self.assertRaises(wspbus.ChannelFailures, b.publish, channel, 123)
+            self.assertRaises(ChannelFailures, b.publish, channel, 123)
             expected.append(msg % (1, channel, 123))
 
         self.assertEqual(self.responses, expected)
@@ -73,6 +73,7 @@ class BusMethodTests(unittest.TestCase):
 
     def log(self, bus):
         self._log_entries = []
+
         def logit(msg, level):
             self._log_entries.append(msg)
         bus.subscribe('log', logit)
@@ -86,7 +87,7 @@ class BusMethodTests(unittest.TestCase):
         return listener
 
     def test_start(self):
-        b = wspbus.Bus()
+        b = Bus()
         self.log(b)
 
         self.responses = []
@@ -109,7 +110,7 @@ class BusMethodTests(unittest.TestCase):
             b.exit()
 
     def test_stop(self):
-        b = wspbus.Bus()
+        b = Bus()
         self.log(b)
 
         self.responses = []
@@ -128,7 +129,7 @@ class BusMethodTests(unittest.TestCase):
         self.assertLog(['Bus STOPPING', 'Bus STOPPED'])
 
     def test_graceful(self):
-        b = wspbus.Bus()
+        b = Bus()
         self.log(b)
 
         self.responses = []
@@ -145,7 +146,7 @@ class BusMethodTests(unittest.TestCase):
         self.assertLog(['Bus graceful'])
 
     def test_exit(self):
-        b = wspbus.Bus()
+        b = Bus()
         self.log(b)
 
         self.responses = []
@@ -167,7 +168,7 @@ class BusMethodTests(unittest.TestCase):
         self.assertLog(['Bus STOPPING', 'Bus STOPPED', 'Bus EXITING', 'Bus EXITED'])
 
     def test_wait(self):
-        b = wspbus.Bus()
+        b = Bus()
 
         def f(method):
             time.sleep(0.2)
@@ -186,14 +187,16 @@ class BusMethodTests(unittest.TestCase):
                 self.fail("State %r not in %r" % (b.state, states))
 
     def test_block(self):
-        b = wspbus.Bus()
+        b = Bus()
         self.log(b)
 
         def f():
             time.sleep(0.2)
             b.exit()
+
         def g():
             time.sleep(0.4)
+
         threading.Thread(target=f).start()
         threading.Thread(target=g).start()
         threads = [t for t in threading.enumerate() if not get_daemon(t)]
@@ -213,14 +216,17 @@ class BusMethodTests(unittest.TestCase):
                           'Waiting for child threads to terminate...'])
 
     def test_start_with_callback(self):
-        b = wspbus.Bus()
+        b = Bus()
         self.log(b)
         try:
             events = []
+
             def f(*args, **kwargs):
                 events.append(("f", args, kwargs))
+
             def g():
                 events.append("g")
+
             b.subscribe("start", g)
             b.start_with_callback(f, (1, 3, 5), {"foo": "bar"})
             # Give wait() time to run f()
@@ -234,7 +240,7 @@ class BusMethodTests(unittest.TestCase):
             b.exit()
 
     def test_log(self):
-        b = wspbus.Bus()
+        b = Bus()
         self.log(b)
         self.assertLog([])
 

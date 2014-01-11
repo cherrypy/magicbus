@@ -1,6 +1,6 @@
-"""An implementation of the Web Site Process Bus.
+"""A pub/sub Bus for managing process states.
 
-A Web Site Process Bus object is used to connect applications, servers,
+A Bus object is used to connect applications, servers,
 and frameworks with site-wide services such as daemonization, process
 reload, signal handling, drop privileges, PID file management, logging
 for all of these, and many more.
@@ -10,12 +10,10 @@ use with the bus. Some use tool-specific channels; see the documentation
 for each class.
 """
 
+from magicbus.base import ChannelFailures
 try:
-    from magicbus import win32
-    bus = win32.Win32Bus()
-    bus.console_control_handler = win32.ConsoleCtrlHandler(bus)
-    del win32
+    from magicbus.win32 import Win32Bus as Bus
 except ImportError:
-    from magicbus.wspbus import Bus
-    bus = Bus()
+    from magicbus.base import Bus
 
+bus = Bus()

@@ -77,4 +77,3 @@ try:
     from _thread import get_ident as get_thread_ident
 except ImportError:
     from thread import get_ident as get_thread_ident
-

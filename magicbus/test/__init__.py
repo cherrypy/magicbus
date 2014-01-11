@@ -6,6 +6,7 @@ Run 'nosetests -s test/' to exercise all tests.
 from magicbus._compat import HTTPServer, HTTPConnection, HTTPHandler
 from subprocess import Popen
 import threading
+import time
 
 from magicbus.plugins import SimplePlugin
 
@@ -86,12 +87,18 @@ class WebAdapter(SimplePlugin):
 
     def start(self):
         threading.Thread(target=self.service.start).start()
+        self.wait()
     # Make sure we start httpd after the daemonizer.
     start.priority = 75
 
     def stop(self):
         self.service.stop()
     stop.priority = 25
+
+    def wait(self):
+        """Wait until the HTTP server is ready to receive requests."""
+        while not getattr(self.service, "ready", False):
+            time.sleep(.1)
 
 
 class WebHandler(HTTPHandler):
