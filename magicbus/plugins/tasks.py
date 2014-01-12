@@ -77,7 +77,7 @@ class BackgroundTask(threading.Thread):
         while self.running:
             # Sleep. Split up so we respond to cancel within one second.
             wholesecs, fracsecs = divmod(self.interval, 1)
-            for s in range(wholesecs):
+            for s in range(int(wholesecs)):
                 time.sleep(1)
                 if not self.running:
                     return
