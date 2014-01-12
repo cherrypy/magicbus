@@ -75,9 +75,17 @@ class BackgroundTask(threading.Thread):
     def run(self):
         self.running = True
         while self.running:
-            time.sleep(self.interval)
-            if not self.running:
-                return
+            # Sleep. Split up so we respond to cancel within one second.
+            wholesecs, fracsecs = divmod(self.interval, 1)
+            for s in range(wholesecs):
+                time.sleep(1)
+                if not self.running:
+                    return
+            if fracsecs:
+                time.sleep(fracsecs)
+                if not self.running:
+                    return
+
             try:
                 self.function(*self.args, **self.kwargs)
             except Exception:
