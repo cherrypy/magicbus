@@ -9,39 +9,39 @@ from magicbus._compat import basestring
 
 class SignalHandler(object):
     """Register bus channels (and listeners) for system signals.
-    
+
     You can modify what signals your application listens for, and what it does
     when it receives signals, by modifying :attr:`SignalHandler.handlers`,
     a dict of {signal name: callback} pairs. The default set is::
-    
+
         handlers = {'SIGTERM': self.bus.exit,
                     'SIGHUP': self.handle_SIGHUP,
                     'SIGUSR1': self.bus.graceful,
                    }
-    
+
     The :func:`SignalHandler.handle_SIGHUP`` method calls
     :func:`bus.restart()<magicbus.Bus.restart>`
     if the process is daemonized, but
     :func:`bus.exit()<magicbus.Bus.exit>`
     if the process is attached to a TTY. This is because Unix window
     managers tend to send SIGHUP to terminal windows when the user closes them.
-    
+
     Feel free to add signals which are not available on every platform. The
     :class:`SignalHandler` will ignore errors raised from attempting to register
     handlers for unknown signals.
     """
-    
+
     handlers = {}
     """A map from signal names (e.g. 'SIGTERM') to handlers (e.g. bus.exit)."""
-    
+
     signals = {}
     """A map from signal numbers to names."""
-    
+
     for k, v in vars(_signal).items():
         if k.startswith('SIG') and not k.startswith('SIG_'):
             signals[v] = k
     del k, v
-    
+
     def __init__(self, bus):
         self.bus = bus
         # Set default handlers
@@ -77,17 +77,17 @@ class SignalHandler(object):
     # Only run after Daemonizer.start
     subscribe_handlers.priority = 70
 
-    def unsubscribe_handlers(self):
+    def unsubscribe(self):
         """Unsubscribe self.handlers from signals."""
         for signum, handler in self._previous_handlers.items():
             signame = self.signals[signum]
-            
+
             if handler is None:
                 self.bus.log("Restoring %s handler to SIG_DFL." % signame)
                 handler = _signal.SIG_DFL
             else:
                 self.bus.log("Restoring %s handler %r." % (signame, handler))
-            
+
             try:
                 our_handler = _signal.signal(signum, handler)
                 if our_handler is None:
@@ -97,13 +97,13 @@ class SignalHandler(object):
             except ValueError:
                 self.bus.log("Unable to restore %s handler %r." %
                              (signame, handler), level=40, traceback=True)
-    
+
     def set_handler(self, signal, listener=None):
         """Subscribe a handler for the given signal (number or name).
-        
+
         If the optional 'listener' argument is provided, it will be
         subscribed as a listener for the given signal's channel.
-        
+
         If the given signal name or number is not available on the current
         platform, ValueError is raised.
         """
@@ -118,14 +118,14 @@ class SignalHandler(object):
             except KeyError:
                 raise ValueError("No such signal: %r" % signal)
             signum = signal
-        
+
         prev = _signal.signal(signum, self._handle_signal)
         self._previous_handlers[signum] = prev
-        
+
         if listener is not None:
             self.bus.log("Listening for %s." % signame)
             self.bus.subscribe(signame, listener)
-    
+
     def _handle_signal(self, signum=None, frame=None):
         """Python signal handler (self.set_handler subscribes it for you)."""
         signame = self.signals[signum]
@@ -141,4 +141,3 @@ class SignalHandler(object):
         else:
             self.bus.log("SIGHUP caught while daemonized. Restarting.")
             self.bus.restart()
-
