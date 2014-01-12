@@ -85,6 +85,7 @@ import socket
 import sys
 import threading
 import time
+import warnings
 
 
 class ServerPlugin(object):
@@ -421,4 +422,12 @@ def wait_for_occupied_port(host, port, timeout=None):
         else:
             time.sleep(timeout)
 
-    raise OSError("Port %r not bound on %r" % (port, host))
+    if host == client_host(host):
+        raise OSError("Port %r not bound on %r" % (port, host))
+
+    # On systems where a loopback interface is not available and the
+    #  server is bound to all interfaces, it's difficult to determine
+    #  whether the server is in fact occupying the port. In this case,
+    #  just issue a warning and move on. See issue #1100.
+    msg = "Unable to verify that the server is bound on %r" % port
+    warnings.warn(msg)
