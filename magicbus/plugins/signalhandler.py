@@ -4,7 +4,7 @@ import os
 import signal as _signal
 import sys
 
-from magicbus._compat import basestring
+from magicbus.compat import basestring
 
 
 class SignalHandler(object):

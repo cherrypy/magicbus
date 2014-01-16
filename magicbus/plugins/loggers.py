@@ -1,5 +1,5 @@
 """Logging plugins for magicbus."""
-from magicbus._compat import ntob
+from magicbus.compat import ntob
 import datetime
 import sys
 

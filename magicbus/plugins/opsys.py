@@ -6,7 +6,7 @@ import threading
 import time
 
 from magicbus.plugins import SimplePlugin
-from magicbus._compat import basestring, ntob
+from magicbus.compat import basestring, ntob
 
 
 try:

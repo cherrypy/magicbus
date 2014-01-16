@@ -1,4 +1,4 @@
-from magicbus._compat import ntob
+from magicbus.compat import ntob
 from magicbus import bus
 from magicbus.plugins import tasks
 from magicbus.test import assertEqual, WebAdapter, WebService, WebHandler

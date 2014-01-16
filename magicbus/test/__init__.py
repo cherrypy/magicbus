@@ -3,7 +3,7 @@
 Run 'nosetests -s test/' to exercise all tests.
 """
 
-from magicbus._compat import HTTPServer, HTTPConnection, HTTPHandler
+from magicbus.compat import HTTPServer, HTTPConnection, HTTPHandler
 import os
 from subprocess import Popen
 import threading

@@ -1,4 +1,4 @@
-from magicbus._compat import ntob
+from magicbus.compat import ntob
 import os
 thismodule = os.path.abspath(__file__)
 import sys
