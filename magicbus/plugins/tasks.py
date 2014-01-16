@@ -7,7 +7,7 @@ import time
 import threading
 
 from magicbus.plugins import SimplePlugin
-from magicbus._compat import get_daemon, get_thread_ident, set
+from magicbus._compat import get_daemon, get_thread_ident, set, TimerClass
 
 # _module__file__base is used by Autoreload to make
 # absolute any filenames retrieved from sys.modules which are not
@@ -28,7 +28,7 @@ from magicbus._compat import get_daemon, get_thread_ident, set
 _module__file__base = os.getcwd()
 
 
-class PerpetualTimer(threading.Timer):
+class PerpetualTimer(TimerClass):
 
     """A responsive subclass of threading.Timer whose run() method repeats.
 
