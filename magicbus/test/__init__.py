@@ -4,6 +4,7 @@ Run 'nosetests -s test/' to exercise all tests.
 """
 
 from magicbus._compat import HTTPServer, HTTPConnection, HTTPHandler
+import os
 from subprocess import Popen
 import threading
 import time
@@ -30,7 +31,10 @@ class Process(object):
     def start(self):
         # Exceptions in the child will be re-raised in the parent,
         # so if yyou're expecting one, trap this call and check for it.
-        self.process = Popen(self.args)
+        cwd = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
+        env = os.environ.copy()
+        env['PYTHONPATH'] = cwd
+        self.process = Popen(self.args, env=env)
 
     def stop(self):
         if self.process is not None:
