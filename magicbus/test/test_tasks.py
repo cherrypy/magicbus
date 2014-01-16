@@ -1,4 +1,3 @@
-from magicbus.compat import ntob
 from magicbus import bus
 from magicbus.plugins import tasks
 from magicbus.test import assertEqual, WebAdapter, WebService, WebHandler
@@ -40,7 +39,7 @@ class TestTasks(object):
             assertEqual(service.ready, True)
             assertEqual(len(tm.threads), 0)
 
-            assertEqual(service.do_GET("/").read(), ntob("Hello World"))
+            assertEqual(service.do_GET("/").read(), b"Hello World")
             assertEqual(len(tm.threads), 1)
 
             # Test bus stop. This will also stop the WebService.

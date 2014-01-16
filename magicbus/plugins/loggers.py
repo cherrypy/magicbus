@@ -40,8 +40,13 @@ class FileLogger(SimplePlugin):
         ):
             if isinstance(msg, str):
                 msg = msg.encode(self.encoding)
-            self.file.write(ntob('[%s] ' % datetime.datetime.now().isoformat())
-                            + msg + ntob('\n'))
+            self.file.write(
+                b'[' +
+                ntob(datetime.datetime.now().isoformat()) +
+                b'] ' +
+                msg +
+                b'\n'
+            )
             self.file.flush()
 
     def stop(self):
