@@ -89,6 +89,7 @@ import warnings
 
 
 class ServerPlugin(object):
+
     """Bus plugin for an HTTP server.
 
     You don't have to use this plugin; you can make your own that listens on
@@ -227,6 +228,7 @@ class ServerPlugin(object):
 # ------- Wrappers for various HTTP servers for use with ServerPlugin ------- #
 
 class FlupCGIServer(object):
+
     """Adapter for a flup.server.cgi.WSGIServer."""
 
     def __init__(self, *args, **kwargs):
@@ -250,6 +252,7 @@ class FlupCGIServer(object):
 
 
 class FlupFCGIServer(object):
+
     """Adapter for a flup.server.fcgi.WSGIServer."""
 
     def __init__(self, *args, **kwargs):
@@ -293,6 +296,7 @@ class FlupFCGIServer(object):
 
 
 class FlupSCGIServer(object):
+
     """Adapter for a flup.server.scgi.WSGIServer."""
 
     def __init__(self, *args, **kwargs):
@@ -357,7 +361,8 @@ def check_port(host, port, timeout=1.0):
                                   socket.SOCK_STREAM)
     except socket.gaierror:
         if ':' in host:
-            info = [(socket.AF_INET6, socket.SOCK_STREAM, 0, "", (host, port, 0, 0))]
+            info = [
+                (socket.AF_INET6, socket.SOCK_STREAM, 0, "", (host, port, 0, 0))]
         else:
             info = [(socket.AF_INET, socket.SOCK_STREAM, 0, "", (host, port))]
 
@@ -428,6 +433,6 @@ def wait_for_occupied_port(host, port, timeout=None):
     # On systems where a loopback interface is not available and the
     #  server is bound to all interfaces, it's difficult to determine
     #  whether the server is in fact occupying the port. In this case,
-    #  just issue a warning and move on. See issue #1100.
+    # just issue a warning and move on. See issue #1100.
     msg = "Unable to verify that the server is bound on %r" % port
     warnings.warn(msg)

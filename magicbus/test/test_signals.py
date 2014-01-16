@@ -112,4 +112,3 @@ if __name__ == '__main__':
     bus.debug = True
     bus.start()
     bus.block()
-

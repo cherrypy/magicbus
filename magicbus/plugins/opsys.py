@@ -10,26 +10,29 @@ from magicbus._compat import basestring, ntob
 
 
 try:
-    import pwd, grp
+    import pwd
+    import grp
 except ImportError:
     pwd, grp = None, None
 
 
 class DropPrivileges(SimplePlugin):
+
     """Drop privileges. uid/gid arguments not available on Windows.
     
     Special thanks to Gavin Baker: http://antonym.org/node/100.
     """
-    
+
     def __init__(self, bus, umask=None, uid=None, gid=None):
         SimplePlugin.__init__(self, bus)
         self.finalized = False
         self.uid = uid
         self.gid = gid
         self.umask = umask
-    
+
     def _get_uid(self):
         return self._uid
+
     def _set_uid(self, val):
         if val is not None:
             if pwd is None:
@@ -40,10 +43,11 @@ class DropPrivileges(SimplePlugin):
                 val = pwd.getpwnam(val)[2]
         self._uid = val
     uid = property(_get_uid, _set_uid,
-        doc="The uid under which to run. Availability: Unix.")
-    
+                   doc="The uid under which to run. Availability: Unix.")
+
     def _get_gid(self):
         return self._gid
+
     def _set_gid(self, val):
         if val is not None:
             if grp is None:
@@ -54,10 +58,11 @@ class DropPrivileges(SimplePlugin):
                 val = grp.getgrnam(val)[2]
         self._gid = val
     gid = property(_get_gid, _set_gid,
-        doc="The gid under which to run. Availability: Unix.")
-    
+                   doc="The gid under which to run. Availability: Unix.")
+
     def _get_umask(self):
         return self._umask
+
     def _set_umask(self, val):
         if val is not None:
             try:
@@ -68,12 +73,12 @@ class DropPrivileges(SimplePlugin):
                 val = None
         self._umask = val
     umask = property(_get_umask, _set_umask,
-        doc="""The default permission mode for newly created files and directories.
+                     doc="""The default permission mode for newly created files and directories.
         
         Usually expressed in octal format, for example, ``0644``.
         Availability: Unix, Windows.
         """)
-    
+
     def start(self):
         # uid/gid
         def current_ids():
@@ -84,7 +89,7 @@ class DropPrivileges(SimplePlugin):
             if grp:
                 group = grp.getgrgid(os.getgid())[0]
             return name, group
-        
+
         if self.finalized:
             if not (self.uid is None and self.gid is None):
                 self.bus.log('Already running as uid: %r gid: %r' %
@@ -101,7 +106,7 @@ class DropPrivileges(SimplePlugin):
                 if self.uid is not None:
                     os.setuid(self.uid)
                 self.bus.log('Running as uid: %r gid: %r' % current_ids())
-        
+
         # umask
         if self.finalized:
             if self.umask is not None:
@@ -113,7 +118,7 @@ class DropPrivileges(SimplePlugin):
                 old_umask = os.umask(self.umask)
                 self.bus.log('umask old: %03o, new: %03o' %
                              (old_umask, self.umask))
-        
+
         self.finalized = True
     # This is slightly higher than the priority for server.start
     # in order to facilitate the most common use: starting on a low
@@ -122,6 +127,7 @@ class DropPrivileges(SimplePlugin):
 
 
 class Daemonizer(SimplePlugin):
+
     """Daemonize the running script.
     
     Use this with a Bus via::
@@ -137,7 +143,7 @@ class Daemonizer(SimplePlugin):
     of whether the process fully started. In fact, that return code only
     indicates if the process succesfully finished the first fork.
     """
-    
+
     def __init__(self, bus, stdin='/dev/null', stdout='/dev/null',
                  stderr='/dev/null'):
         SimplePlugin.__init__(self, bus)
@@ -145,11 +151,11 @@ class Daemonizer(SimplePlugin):
         self.stdout = stdout
         self.stderr = stderr
         self.finalized = False
-    
+
     def start(self):
         if self.finalized:
             self.bus.log('Already deamonized.')
-        
+
         # forking has issues with threads:
         # http://www.opengroup.org/onlinepubs/000095399/functions/fork.html
         # "The general problem with making fork() work in a multi-threaded
@@ -159,15 +165,15 @@ class Daemonizer(SimplePlugin):
             self.bus.log('There are %r active threads. '
                          'Daemonizing now may cause strange failures.' %
                          threading.enumerate(), level=30)
-        
+
         # See http://www.erlenstar.demon.co.uk/unix/faq_2.html#SEC16
         # (or http://www.faqs.org/faqs/unix-faq/programmer/faq/ section 1.7)
         # and http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/66012
-        
+
         # Finish up with the current stdout/stderr
         sys.stdout.flush()
         sys.stderr.flush()
-        
+
         # Do first fork.
         try:
             pid = os.fork()
@@ -183,23 +189,23 @@ class Daemonizer(SimplePlugin):
             exc = sys.exc_info()[1]
             sys.exit("%s: fork #1 failed: (%d) %s\n"
                      % (sys.argv[0], exc.errno, exc.strerror))
-        
+
         os.setsid()
-        
+
         # Do second fork
         try:
             pid = os.fork()
             if pid > 0:
                 self.bus.log('Forking twice.')
-                os._exit(0) # Exit second parent
+                os._exit(0)  # Exit second parent
         except OSError:
             exc = sys.exc_info()[1]
             sys.exit("%s: fork #2 failed: (%d) %s\n"
                      % (sys.argv[0], exc.errno, exc.strerror))
-        
+
         os.chdir("/")
         os.umask(0)
-        
+
         si = open(self.stdin, "r")
         so = open(self.stdout, "a+")
         se = open(self.stderr, "a+")
@@ -210,20 +216,21 @@ class Daemonizer(SimplePlugin):
         os.dup2(si.fileno(), sys.stdin.fileno())
         os.dup2(so.fileno(), sys.stdout.fileno())
         os.dup2(se.fileno(), sys.stderr.fileno())
-        
+
         self.bus.log('Daemonized to PID: %s' % os.getpid())
         self.finalized = True
     start.priority = 65
 
 
 class PIDFile(SimplePlugin):
+
     """Maintain a PID file via a WSPBus."""
-    
+
     def __init__(self, bus, pidfile):
         SimplePlugin.__init__(self, bus)
         self.pidfile = pidfile
         self.finalized = False
-    
+
     def start(self):
         pid = os.getpid()
         if self.finalized:
@@ -233,7 +240,7 @@ class PIDFile(SimplePlugin):
             self.bus.log('PID %r written to %r.' % (pid, self.pidfile))
             self.finalized = True
     start.priority = 70
-    
+
     def exit(self):
         try:
             os.remove(self.pidfile)
@@ -242,7 +249,7 @@ class PIDFile(SimplePlugin):
             raise
         except:
             pass
-    
+
     def wait(self, timeout=None, poll_interval=0.1):
         """Return the PID when the file exists, or None when timeout expires."""
         starttime = time.time()
@@ -250,7 +257,7 @@ class PIDFile(SimplePlugin):
             if os.path.exists(self.pidfile):
                 return int(open(self.pidfile, 'rb').read())
             time.sleep(poll_interval)
-    
+
     def join(self, timeout=None, poll_interval=0.1):
         """Return when the PID file does not exist, or the timeout expires."""
         starttime = time.time()
@@ -258,4 +265,3 @@ class PIDFile(SimplePlugin):
             if not os.path.exists(self.pidfile):
                 return
             time.sleep(poll_interval)
-

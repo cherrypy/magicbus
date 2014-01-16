@@ -21,7 +21,7 @@ name = "MagicBus"
 version = "3.3.0alpha"
 desc = "An implementation of the Web Site Process Bus"
 long_desc = "The Process Bus is a publish/subscribe architecture that loosely connects components with services."
-classifiers=[
+classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Web Environment",
     "Intended Audience :: Developers",
@@ -34,16 +34,16 @@ classifiers=[
     "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
 ]
-author="CherryPy Team"
-author_email="team@cherrypy.org"
-url="http://www.cherrypy.org"
-cp_license="BSD"
-packages=[
+author = "CherryPy Team"
+author_email = "team@cherrypy.org"
+url = "http://www.cherrypy.org"
+cp_license = "BSD"
+packages = [
     "magicbus", "magicbus.plugins",
     "magicbus.test",
 ]
-download_url="http://download.cherrypy.org/magicbus/3.3.0alpha/"
-data_files=[
+download_url = "http://download.cherrypy.org/magicbus/3.3.0alpha/"
+data_files = [
     ('magicbus', ['magicbus/LICENSE.txt']),
     ('magicbus/plugins', []),
     ('magicbus/test', []),
@@ -55,9 +55,11 @@ data_files=[
 
 # wininst may install data_files in Python/x.y instead of the magicbus package.
 # Django's solution is at http://code.djangoproject.com/changeset/8313
-# See also http://mail.python.org/pipermail/distutils-sig/2004-August/004134.html
+# See also
+# http://mail.python.org/pipermail/distutils-sig/2004-August/004134.html
 if 'bdist_wininst' in sys.argv or '--format=wininst' in sys.argv:
     data_files = [(r'\PURELIB\%s' % path, files) for path, files in data_files]
+
 
 def main():
     if sys.version < '2.4':

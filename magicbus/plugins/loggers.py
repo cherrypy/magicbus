@@ -45,4 +45,3 @@ class FileLogger(SimplePlugin):
             self.file.close()
             self.file = None
     stop.priority = 100
-

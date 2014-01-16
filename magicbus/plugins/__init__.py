@@ -2,6 +2,7 @@
 
 
 class SimplePlugin(object):
+
     """Plugin base class which auto-subscribes methods for known channels."""
 
     bus = None

@@ -15,6 +15,7 @@ def assertEqual(x, y, msg=None):
     if not x == y:
         raise AssertionError(msg or "%r != %r" % (x, y))
 
+
 def assertNotEqual(x, y, msg=None):
     if x == y:
         raise AssertionError(msg or "%r == %r" % (x, y))
@@ -125,4 +126,3 @@ class WebHandler(HTTPHandler):
     def handle(self, *args, **kwargs):
         self.bus.publish('acquire_thread')
         HTTPHandler.handle(self, *args, **kwargs)
-

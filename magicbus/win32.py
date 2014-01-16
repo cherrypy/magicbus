@@ -11,6 +11,7 @@ from magicbus import base, plugins
 
 
 class ConsoleCtrlHandler(plugins.SimplePlugin):
+
     """A Bus plugin for handling Win32 console events (like Ctrl-C)."""
 
     def __init__(self, bus):
@@ -68,6 +69,7 @@ class ConsoleCtrlHandler(plugins.SimplePlugin):
 
 
 class Win32Bus(base.Bus):
+
     """A Bus implementation for Win32.
 
     Instead of time.sleep, this bus blocks using native win32event objects.
@@ -108,7 +110,8 @@ class Win32Bus(base.Bus):
             # Don't wait for an event that beat us to the punch ;)
             if self.state not in state:
                 events = tuple([self._get_state_event(s) for s in state])
-                win32event.WaitForMultipleObjects(events, 0, win32event.INFINITE)
+                win32event.WaitForMultipleObjects(
+                    events, 0, win32event.INFINITE)
         else:
             # Don't wait for an event that beat us to the punch ;)
             if self.state != state:
@@ -117,6 +120,7 @@ class Win32Bus(base.Bus):
 
 
 class _ControlCodes(dict):
+
     """Control codes used to "signal" a service via ControlService.
 
     User-defined control codes are in the range 128-255. We generally use
@@ -147,6 +151,7 @@ def signal_child(service, command):
 
 
 class PyWebService(win32serviceutil.ServiceFramework):
+
     """Python Web Service."""
 
     _svc_name_ = "Python Web Service"

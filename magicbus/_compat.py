@@ -21,6 +21,7 @@ if sys.version_info >= (3, 0):
     unicodestr = str
     nativestr = unicodestr
     basestring = (bytes, str)
+
     def ntob(n, encoding='ISO-8859-1'):
         """Return the given native string as a byte string in the given encoding."""
         # In Python 3, the native string type is unicode
@@ -32,6 +33,7 @@ else:
     unicodestr = unicode
     nativestr = bytestr
     basestring = basestring
+
     def ntob(n, encoding='ISO-8859-1'):
         """Return the given native string as a byte string in the given encoding."""
         # In Python 2, the native string type is bytes. Assume it's already
@@ -65,11 +67,13 @@ if hasattr(threading.Thread, "daemon"):
     # Python 2.6+
     def get_daemon(t):
         return t.daemon
+
     def set_daemon(t, val):
         t.daemon = val
 else:
     def get_daemon(t):
         return t.isDaemon()
+
     def set_daemon(t, val):
         t.setDaemon(val)
 

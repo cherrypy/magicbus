@@ -25,7 +25,8 @@ class TestTasks(object):
     def test_thread_manager(self):
         bus.clear()
 
-        service = WebService(address=('127.0.0.1', 8001), handler_class=Handler)
+        service = WebService(address=('127.0.0.1', 8001),
+                             handler_class=Handler)
         WebAdapter(bus, service).subscribe()
 
         tm = tasks.ThreadManager(bus)

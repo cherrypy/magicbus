@@ -29,6 +29,7 @@ _module__file__base = os.getcwd()
 
 
 class PerpetualTimer(threading.Timer):
+
     """A responsive subclass of threading.Timer whose run() method repeats.
 
     Use this timer only when you really need a very interruptible timer;
@@ -51,6 +52,7 @@ class PerpetualTimer(threading.Timer):
 
 
 class BackgroundTask(threading.Thread):
+
     """A subclass of threading.Thread whose run() method repeats.
 
     Use this class for most repeating tasks. It uses time.sleep() to wait
@@ -100,6 +102,7 @@ class BackgroundTask(threading.Thread):
 
 
 class Monitor(SimplePlugin):
+
     """WSPBus listener to periodically run a callback in its own thread."""
 
     callback = None
@@ -135,7 +138,8 @@ class Monitor(SimplePlugin):
     def stop(self):
         """Stop our callback's background task thread."""
         if self.thread is None:
-            self.bus.log("No thread running for %s." % self.name or self.__class__.__name__)
+            self.bus.log("No thread running for %s." %
+                         self.name or self.__class__.__name__)
         else:
             if self.thread is not threading.currentThread():
                 name = self.thread.getName()
@@ -153,6 +157,7 @@ class Monitor(SimplePlugin):
 
 
 class Autoreloader(Monitor):
+
     """Monitor which re-executes the process when files change.
 
     This :ref:`plugin<plugins>` restarts the process (via :func:`os.execv`)
@@ -205,8 +210,10 @@ class Autoreloader(Monitor):
                 else:
                     f = getattr(m, '__file__', None)
                     if f is not None and not os.path.isabs(f):
-                        # ensure absolute paths so a os.chdir() in the app doesn't break me
-                        f = os.path.normpath(os.path.join(_module__file__base, f))
+                        # ensure absolute paths so a os.chdir() in the app
+                        # doesn't break me
+                        f = os.path.normpath(
+                            os.path.join(_module__file__base, f))
                 files.add(f)
         return files
 
@@ -234,14 +241,17 @@ class Autoreloader(Monitor):
                 else:
                     if mtime is None or mtime > oldtime:
                         # The file has been deleted or modified.
-                        self.bus.log("Restarting because %s changed." % filename)
+                        self.bus.log("Restarting because %s changed." %
+                                     filename)
                         self.thread.cancel()
-                        self.bus.log("Stopped thread %r." % self.thread.getName())
+                        self.bus.log("Stopped thread %r." %
+                                     self.thread.getName())
                         self.bus.restart()
                         return
 
 
 class ThreadManager(SimplePlugin):
+
     """Manager for HTTP request threads.
 
     If you have control over thread creation and destruction, publish to

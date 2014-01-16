@@ -7,8 +7,9 @@ from magicbus import bus
 from magicbus.plugins import loggers, opsys
 from magicbus.test import assertEqual, Process, WebAdapter, WebService, WebHandler
 
-#loggers.StdoutLogger(bus).subscribe()
+# loggers.StdoutLogger(bus).subscribe()
 pidfile = opsys.PIDFile(bus, os.path.join(thismodule + ".pid"))
+
 
 class Handler(WebHandler):
 
@@ -44,7 +45,8 @@ class TestOpsys(object):
             resp = service.do_GET("/pid")
             assertEqual(resp.status, 200)
             page_pid = int(resp.read())
-            assertEqual(ntob(str(page_pid)), open(pidfile.pidfile, 'rb').read())
+            assertEqual(ntob(str(page_pid)),
+                        open(pidfile.pidfile, 'rb').read())
         finally:
             # Shut down the spawned process
             service.do_GET("/exit")
@@ -67,4 +69,3 @@ if __name__ == '__main__':
     WebAdapter(bus, service).subscribe()
     bus.start()
     bus.block()
-

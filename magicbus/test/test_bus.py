@@ -23,7 +23,8 @@ class PublishSubscribeTests(unittest.TestCase):
 
         for channel in b.listeners:
             for index, priority in enumerate([100, 50, 0, 51]):
-                b.subscribe(channel, self.get_listener(channel, index), priority)
+                b.subscribe(channel,
+                            self.get_listener(channel, index), priority)
 
         for channel in b.listeners:
             b.publish(channel)
@@ -41,11 +42,13 @@ class PublishSubscribeTests(unittest.TestCase):
         custom_listeners = ('hugh', 'louis', 'dewey')
         for channel in custom_listeners:
             for index, priority in enumerate([None, 10, 60, 40]):
-                b.subscribe(channel, self.get_listener(channel, index), priority)
+                b.subscribe(channel,
+                            self.get_listener(channel, index), priority)
 
         for channel in custom_listeners:
             b.publish(channel, 'ah so')
-            expected.extend([msg % (i, channel, 'ah so') for i in (1, 3, 0, 2)])
+            expected.extend([msg % (i, channel, 'ah so')
+                            for i in (1, 3, 0, 2)])
             b.publish(channel)
             expected.extend([msg % (i, channel, None) for i in (1, 3, 0, 2)])
 
@@ -165,7 +168,8 @@ class BusMethodTests(unittest.TestCase):
         # The exit method MUST move the state to EXITING
         self.assertEqual(b.state, b.states.EXITING)
         # The exit method MUST log its states.
-        self.assertLog(['Bus STOPPING', 'Bus STOPPED', 'Bus EXITING', 'Bus EXITED'])
+        self.assertLog(
+            ['Bus STOPPING', 'Bus STOPPED', 'Bus EXITING', 'Bus EXITED'])
 
     def test_wait(self):
         b = Bus()
@@ -176,7 +180,8 @@ class BusMethodTests(unittest.TestCase):
 
         for method, states in [('start', [b.states.STARTED]),
                                ('stop', [b.states.STOPPED]),
-                               ('start', [b.states.STARTING, b.states.STARTED]),
+                               ('start',
+                                [b.states.STARTING, b.states.STARTED]),
                                ('exit', [b.states.EXITING]),
                                ]:
             threading.Thread(target=f, args=(method,)).start()
@@ -206,10 +211,12 @@ class BusMethodTests(unittest.TestCase):
 
         # The block method MUST wait for the EXITING state.
         self.assertEqual(b.state, b.states.EXITING)
-        # The block method MUST wait for ALL non-main, non-daemon threads to finish.
+        # The block method MUST wait for ALL non-main, non-daemon threads to
+        # finish.
         threads = [t for t in threading.enumerate() if not get_daemon(t)]
         self.assertEqual(len(threads), 1)
-        # The last message will mention an indeterminable thread name; ignore it
+        # The last message will mention an indeterminable thread name; ignore
+        # it
         self.assertEqual(self._log_entries[:-1],
                          ['Bus STOPPING', 'Bus STOPPED',
                           'Bus EXITING', 'Bus EXITED',
