@@ -28,8 +28,8 @@ class SignalHandler(object):
     managers tend to send SIGHUP to terminal windows when the user closes them.
 
     Feel free to add signals which are not available on every platform. The
-    :class:`SignalHandler` will ignore errors raised from attempting to register
-    handlers for unknown signals.
+    :class:`SignalHandler` will ignore errors raised from attempting to
+    register handlers for unknown signals.
     """
 
     handlers = {}

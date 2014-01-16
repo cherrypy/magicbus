@@ -20,7 +20,8 @@ class StdoutLogger(SimplePlugin):
 
 class FileLogger(SimplePlugin):
 
-    def __init__(self, bus, filename=None, file=None, encoding='utf8', level=None):
+    def __init__(self, bus, filename=None, file=None, encoding='utf8',
+                 level=None):
         SimplePlugin.__init__(self, bus)
         self.filename = filename
         self.file = file
@@ -33,7 +34,10 @@ class FileLogger(SimplePlugin):
     start.priority = 0
 
     def log(self, msg, level):
-        if (self.level is None or self.level <= level) and self.file is not None:
+        if (
+            (self.level is None or self.level <= level) and
+            self.file is not None
+        ):
             if isinstance(msg, str):
                 msg = msg.encode(self.encoding)
             self.file.write(ntob('[%s] ' % datetime.datetime.now().isoformat())

@@ -23,7 +23,8 @@ if sys.version_info >= (3, 0):
     basestring = (bytes, str)
 
     def ntob(n, encoding='ISO-8859-1'):
-        """Return the given native string as a byte string in the given encoding."""
+        """Return the given native string as a byte string in the given
+        encoding."""
         # In Python 3, the native string type is unicode
         return n.encode(encoding)
 else:
@@ -35,7 +36,8 @@ else:
     basestring = basestring
 
     def ntob(n, encoding='ISO-8859-1'):
-        """Return the given native string as a byte string in the given encoding."""
+        """Return the given native string as a byte string in the given
+        encoding."""
         # In Python 2, the native string type is bytes. Assume it's already
         # in the given encoding, which for ISO-8859-1 is almost always what
         # was intended.
@@ -55,7 +57,8 @@ except ImportError:
 try:
     from http.server import HTTPServer, BaseHTTPRequestHandler as HTTPHandler
 except ImportError:
-    from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler as HTTPHandler
+    from BaseHTTPServer import HTTPServer
+    from BaseHTTPServer import BaseHTTPRequestHandler as HTTPHandler
 
 try:
     from http.client import HTTPConnection

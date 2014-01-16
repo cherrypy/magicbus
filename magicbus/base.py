@@ -78,7 +78,8 @@ _startup_cwd = os.getcwd()
 
 class ChannelFailures(Exception):
 
-    """Exception raised when errors occur in a listener during Bus.publish()."""
+    """Exception raised when errors occur in a listener during Bus.publish().
+    """
     delimiter = '\n'
 
     def __init__(self, *args, **kwargs):

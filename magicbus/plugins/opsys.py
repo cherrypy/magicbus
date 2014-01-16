@@ -19,7 +19,7 @@ except ImportError:
 class DropPrivileges(SimplePlugin):
 
     """Drop privileges. uid/gid arguments not available on Windows.
-    
+
     Special thanks to Gavin Baker: http://antonym.org/node/100.
     """
 
@@ -72,9 +72,12 @@ class DropPrivileges(SimplePlugin):
                              level=30)
                 val = None
         self._umask = val
-    umask = property(_get_umask, _set_umask,
-                     doc="""The default permission mode for newly created files and directories.
-        
+    umask = property(
+        _get_umask,
+        _set_umask,
+        doc="""The default permission mode for newly created files and
+        directories.
+
         Usually expressed in octal format, for example, ``0644``.
         Availability: Unix, Windows.
         """)
@@ -129,11 +132,11 @@ class DropPrivileges(SimplePlugin):
 class Daemonizer(SimplePlugin):
 
     """Daemonize the running script.
-    
+
     Use this with a Bus via::
-    
+
         Daemonizer(bus).subscribe()
-    
+
     When this component finishes, the process is completely decoupled from
     the parent environment. Please note that when this component is used,
     the return code from the parent process will still be 0 if a startup
@@ -251,7 +254,8 @@ class PIDFile(SimplePlugin):
             pass
 
     def wait(self, timeout=None, poll_interval=0.1):
-        """Return the PID when the file exists, or None when timeout expires."""
+        """Return the PID when the file exists, or None when timeout expires.
+        """
         starttime = time.time()
         while timeout is None or time.time() - starttime <= timeout:
             if os.path.exists(self.pidfile):

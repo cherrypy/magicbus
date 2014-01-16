@@ -19,8 +19,8 @@ from magicbus._compat import get_daemon, get_thread_ident, set, TimerClass
 # changes the current directory by executing os.chdir(), then the next time
 # Autoreload runs, it will not be able to find any filenames which are
 # not absolute paths, because the current directory is not the same as when the
-# module was first imported.  Autoreload will then wrongly conclude the file has
-# "changed", and initiate the shutdown/re-exec sequence.
+# module was first imported.  Autoreload will then wrongly conclude the file
+# has "changed", and initiate the shutdown/re-exec sequence.
 # See ticket #917.
 # For this workaround to have a decent probability of success, this module
 # needs to be imported as early as possible, before the app has much chance
@@ -112,7 +112,8 @@ class Monitor(SimplePlugin):
     """The time in seconds between callback runs."""
 
     thread = None
-    """A :class:`BackgroundTask<magicbus.plugins.tasks.BackgroundTask>` thread."""
+    """A :class:`BackgroundTask<magicbus.plugins.tasks.BackgroundTask>` thread.
+    """
 
     def __init__(self, bus, callback, frequency=60, name=None):
         SimplePlugin.__init__(self, bus)
@@ -167,9 +168,9 @@ class Autoreloader(Monitor):
 
         bus.autoreload.files.add(myFile)
 
-    If there are imported files you do *not* wish to monitor, you can adjust the
-    ``match`` attribute, a regular expression. For example, to stop monitoring
-    the bus itself::
+    If there are imported files you do *not* wish to monitor, you can adjust
+    the ``match`` attribute, a regular expression. For example, to stop
+    monitoring the bus itself::
 
         bus.autoreload.match = r'^(?!magicbus).+'
 
@@ -205,7 +206,10 @@ class Autoreloader(Monitor):
         files = set()
         for k, m in sys.modules.items():
             if re.match(self.match, k):
-                if hasattr(m, '__loader__') and hasattr(m.__loader__, 'archive'):
+                if (
+                    hasattr(m, '__loader__') and
+                    hasattr(m.__loader__, 'archive')
+                ):
                     f = m.__loader__.archive
                 else:
                     f = getattr(m, '__file__', None)

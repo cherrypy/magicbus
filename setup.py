@@ -20,7 +20,8 @@ import sys
 name = "MagicBus"
 version = "3.3.0alpha"
 desc = "An implementation of the Web Site Process Bus"
-long_desc = "The Process Bus is a publish/subscribe architecture that loosely connects components with services."
+long_desc = ("The Process Bus is a publish/subscribe architecture that"
+             " loosely connects components with services.")
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Web Environment",

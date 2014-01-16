@@ -39,8 +39,9 @@ def use_setuptools(
         import setuptools
         if setuptools.__version__ == '0.0.1':
             sys.stderr.write(
-                "You have an obsolete version of setuptools installed.  Please\n"
-                "remove it from your system entirely before rerunning this script."
+                "You have an obsolete version of setuptools installed."
+                "  Please\nremove it from your system entirely before "
+                "rerunning this script."
             )
             sys.exit(2)
 
