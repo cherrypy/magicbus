@@ -2,7 +2,7 @@ import threading
 import time
 import unittest
 
-from magicbus.compat import get_daemon, set
+from magicbus.compat import get_daemon
 from magicbus import Bus, ChannelFailures
 
 

@@ -44,11 +44,6 @@ else:
         return n
 
 try:
-    set = set
-except NameError:
-    from sets import Set as set
-
-try:
     from httplib import BadStatusLine
 except ImportError:
     # Python 3
