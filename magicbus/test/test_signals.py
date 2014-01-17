@@ -1,4 +1,3 @@
-import errno
 import os
 thismodule = os.path.abspath(__file__)
 import sys
@@ -6,7 +5,7 @@ import time
 
 from magicbus import bus
 from magicbus.plugins import loggers, opsys, signalhandler
-from magicbus.test import assertEqual, assertNotEqual
+from magicbus.test import assertNotEqual
 from magicbus.test import Process
 
 loggers.FileLogger(bus, "test_signals.log").subscribe()

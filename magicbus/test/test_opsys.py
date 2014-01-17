@@ -4,11 +4,10 @@ thismodule = os.path.abspath(__file__)
 import sys
 
 from magicbus import bus
-from magicbus.plugins import loggers, opsys
+from magicbus.plugins import opsys
 from magicbus.test import assertEqual, Process, WebAdapter, WebService
 from magicbus.test import WebHandler
 
-# loggers.StdoutLogger(bus).subscribe()
 pidfile = opsys.PIDFile(bus, os.path.join(thismodule + ".pid"))
 
 

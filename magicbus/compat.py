@@ -11,8 +11,6 @@ provides new 'bytestr', 'unicodestr', and 'nativestr' attributes, as well as
 the function: 'ntob', which translates native strings (of type 'str') into
 byte strings regardless of Python version.
 """
-import os
-import re
 import sys
 
 if sys.version_info >= (3, 0):
