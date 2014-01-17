@@ -81,9 +81,7 @@ class ChannelFailures(Exception):
     delimiter = '\n'
 
     def __init__(self, *args, **kwargs):
-        # Don't use 'super' here; Exceptions are old-style in Py2.4
-        # See http://www.cherrypy.org/ticket/959
-        Exception.__init__(self, *args, **kwargs)
+        super(ChannelFailures, self).__init__(*args, **kwargs)
         self._exceptions = list()
 
     def handle_exception(self):
@@ -202,12 +200,7 @@ class Bus(object):
 
         items = [(self._priorities[(channel, listener)], listener)
                  for listener in self.listeners[channel]]
-        try:
-            items.sort(key=lambda item: item[0])
-        except TypeError:
-            # Python 2.3 had no 'key' arg, but that doesn't matter
-            # since it could sort dissimilar types just fine.
-            items.sort()
+        items.sort(key=lambda item: item[0])
         for priority, listener in items:
             try:
                 if self.debug and channel != 'log':
@@ -342,12 +335,7 @@ class Bus(object):
         for t in threading.enumerate():
             if t != threading.currentThread() and t.isAlive():
                 # Note that any dummy (external) threads are always daemonic.
-                if hasattr(threading.Thread, "daemon"):
-                    # Python 2.6+
-                    d = t.daemon
-                else:
-                    d = t.isDaemon()
-                if not d:
+                if not t.daemon:
                     self.log("Waiting for thread %s." % t.getName())
                     t.join()
 

@@ -1,6 +1,6 @@
 """Compatibility code for using magicbus with various versions of Python.
 
-Process Bus 3.3 is compatible with Python versions 2.3+. This module provides a
+Process Bus 3.3 is compatible with Python versions 2.7+. This module provides a
 useful abstraction over the differences between Python versions, sometimes by
 preferring a newer idiom, sometimes an older one, and sometimes a custom one.
 
@@ -60,20 +60,17 @@ try:
 except ImportError:
     from httplib import HTTPConnection
 
+
 import threading
-if hasattr(threading.Thread, "daemon"):
-    # Python 2.6+
-    def get_daemon(t):
-        return t.daemon
 
-    def set_daemon(t, val):
-        t.daemon = val
-else:
-    def get_daemon(t):
-        return t.isDaemon()
 
-    def set_daemon(t, val):
-        t.setDaemon(val)
+def get_daemon(t):
+    return t.daemon
+
+
+def set_daemon(t, val):
+    t.daemon = val
+
 
 try:
     from _thread import get_ident as get_thread_ident
