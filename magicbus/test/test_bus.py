@@ -2,7 +2,6 @@ import threading
 import time
 import unittest
 
-from magicbus.compat import get_daemon
 from magicbus import Bus, ChannelFailures
 
 
@@ -208,7 +207,7 @@ class BusMethodTests(unittest.TestCase):
 
         threading.Thread(target=f).start()
         threading.Thread(target=g).start()
-        threads = [t for t in threading.enumerate() if not get_daemon(t)]
+        threads = [t for t in threading.enumerate() if not t.daemon]
         self.assertEqual(len(threads), 3)
 
         b.block()
@@ -217,7 +216,7 @@ class BusMethodTests(unittest.TestCase):
         self.assertEqual(b.state, b.states.EXITING)
         # The block method MUST wait for ALL non-main, non-daemon threads to
         # finish.
-        threads = [t for t in threading.enumerate() if not get_daemon(t)]
+        threads = [t for t in threading.enumerate() if not t.daemon]
         self.assertEqual(len(threads), 1)
         # The last message will mention an indeterminable thread name; ignore
         # it

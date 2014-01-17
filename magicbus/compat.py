@@ -52,14 +52,6 @@ except ImportError:
 import threading
 
 
-def get_daemon(t):
-    return t.daemon
-
-
-def set_daemon(t, val):
-    t.daemon = val
-
-
 try:
     from _thread import get_ident as get_thread_ident
 except ImportError:

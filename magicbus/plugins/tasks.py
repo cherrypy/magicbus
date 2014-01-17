@@ -7,7 +7,7 @@ import time
 import threading
 
 from magicbus.plugins import SimplePlugin
-from magicbus.compat import get_daemon, get_thread_ident, TimerClass
+from magicbus.compat import get_thread_ident, TimerClass
 
 # _module__file__base is used by Autoreload to make
 # absolute any filenames retrieved from sys.modules which are not
@@ -145,7 +145,7 @@ class Monitor(SimplePlugin):
             if self.thread is not threading.currentThread():
                 name = self.thread.getName()
                 self.thread.cancel()
-                if not get_daemon(self.thread):
+                if not self.thread.daemon:
                     self.bus.log("Joining %r" % name)
                     self.thread.join()
                 self.bus.log("Stopped thread %r." % name)
