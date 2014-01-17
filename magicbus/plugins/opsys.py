@@ -30,10 +30,13 @@ class DropPrivileges(SimplePlugin):
         self.gid = gid
         self.umask = umask
 
-    def _get_uid(self):
+    @property
+    def uid(self):
+        """The uid under which to run. Availability: Unix."""
         return self._uid
 
-    def _set_uid(self, val):
+    @uid.setter
+    def uid(self, val):
         if val is not None:
             if pwd is None:
                 self.bus.log("pwd module not available; ignoring uid.",
@@ -42,13 +45,14 @@ class DropPrivileges(SimplePlugin):
             elif isinstance(val, basestring):
                 val = pwd.getpwnam(val)[2]
         self._uid = val
-    uid = property(_get_uid, _set_uid,
-                   doc="The uid under which to run. Availability: Unix.")
 
-    def _get_gid(self):
+    @property
+    def gid(self):
+        """The gid under which to run. Availability: Unix."""
         return self._gid
 
-    def _set_gid(self, val):
+    @gid.setter
+    def gid(self, val):
         if val is not None:
             if grp is None:
                 self.bus.log("grp module not available; ignoring gid.",
@@ -57,13 +61,18 @@ class DropPrivileges(SimplePlugin):
             elif isinstance(val, basestring):
                 val = grp.getgrnam(val)[2]
         self._gid = val
-    gid = property(_get_gid, _set_gid,
-                   doc="The gid under which to run. Availability: Unix.")
 
-    def _get_umask(self):
+    @property
+    def umask(self):
+        """The default permission mode for newly created files and directories.
+
+        Usually expressed in octal format, for example, ``0644``.
+        Availability: Unix, Windows.
+        """
         return self._umask
 
-    def _set_umask(self, val):
+    @umask.setter
+    def umask(self, val):
         if val is not None:
             try:
                 os.umask
@@ -72,15 +81,6 @@ class DropPrivileges(SimplePlugin):
                              level=30)
                 val = None
         self._umask = val
-    umask = property(
-        _get_umask,
-        _set_umask,
-        doc="""The default permission mode for newly created files and
-        directories.
-
-        Usually expressed in octal format, for example, ``0644``.
-        Availability: Unix, Windows.
-        """)
 
     def start(self):
         # uid/gid
