@@ -38,21 +38,15 @@ else:
         return n
 
 try:
-    from httplib import BadStatusLine
-except ImportError:
-    # Python 3
-    from http.client import BadStatusLine
-
-try:
     from http.server import HTTPServer, BaseHTTPRequestHandler as HTTPHandler
 except ImportError:
     from BaseHTTPServer import HTTPServer
     from BaseHTTPServer import BaseHTTPRequestHandler as HTTPHandler
 
 try:
-    from http.client import HTTPConnection
+    from http.client import BadStatusLine, HTTPConnection
 except ImportError:
-    from httplib import HTTPConnection
+    from httplib import BadStatusLine, HTTPConnection
 
 
 import threading
