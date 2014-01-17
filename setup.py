@@ -50,6 +50,11 @@ data_files = [
     ('magicbus/test', []),
 ]
 
+if sys.version_info >= (3, 0):
+    required_python_version = '3.3'
+else:
+    required_python_version = '2.7'
+
 ###############################################################################
 # end arguments for setup
 ###############################################################################
@@ -63,9 +68,9 @@ if 'bdist_wininst' in sys.argv or '--format=wininst' in sys.argv:
 
 
 def main():
-    if sys.version < '2.4':
-        s = "I'm sorry, but %s %s requires Python 2.4 or later."
-        print(s % (name, version))
+    if sys.version < required_python_version:
+        s = "I'm sorry, but %s %s requires Python %s or later."
+        print(s % (name, version, required_python_version))
         sys.exit(1)
     # set default location for "data_files" to
     # platform specific "site-packages" location
