@@ -44,9 +44,9 @@ except ImportError:
     from BaseHTTPServer import BaseHTTPRequestHandler as HTTPHandler
 
 try:
-    from http.client import BadStatusLine, HTTPConnection
+    from http.client import HTTPConnection
 except ImportError:
-    from httplib import BadStatusLine, HTTPConnection
+    from httplib import HTTPConnection
 
 
 import threading
