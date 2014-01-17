@@ -129,4 +129,4 @@ class WebHandler(HTTPHandler):
 
     def handle(self, *args, **kwargs):
         self.bus.publish('acquire_thread')
-        HTTPHandler.handle(self, *args, **kwargs)
+        HTTPHandler.handle(self)
