@@ -181,12 +181,12 @@ class BusMethodTests(unittest.TestCase):
             time.sleep(0.2)
             getattr(b, method)()
 
-        for method_, states in [('start', [b.states.STARTED]),
-                               ('stop', [b.states.STOPPED]),
-                               ('start',
-                                [b.states.STARTING, b.states.STARTED]),
-                               ('exit', [b.states.EXITING]),
-                               ]:
+        for method_, states in [
+                ('start', [b.states.STARTED]),
+                ('stop', [b.states.STOPPED]),
+                ('start', [b.states.STARTING, b.states.STARTED]),
+                ('exit', [b.states.EXITING])
+        ]:
             threading.Thread(target=f, args=(method_,)).start()
             b.wait(states)
 
