@@ -17,9 +17,6 @@ import sys
 
 if sys.version_info >= (3, 0):
     py3k = True
-    bytestr = bytes
-    unicodestr = str
-    nativestr = unicodestr
     basestring = (bytes, str)
 
     def ntob(n, encoding='ISO-8859-1'):
@@ -30,9 +27,6 @@ if sys.version_info >= (3, 0):
 else:
     # Python 2
     py3k = False
-    bytestr = str
-    unicodestr = unicode
-    nativestr = bytestr
     basestring = basestring
 
     def ntob(n, encoding='ISO-8859-1'):
