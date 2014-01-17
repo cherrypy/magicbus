@@ -76,8 +76,8 @@ class BusMethodTests(unittest.TestCase):
     def log(self, bus):
         self._log_entries = []
 
-        def logit(msg, level):
-            self._log_entries.append(msg)
+        def logit(msg_, level):
+            self._log_entries.append(msg_)
         bus.subscribe('log', logit)
 
     def assertLog(self, entries):
@@ -181,13 +181,13 @@ class BusMethodTests(unittest.TestCase):
             time.sleep(0.2)
             getattr(b, method)()
 
-        for method, states in [('start', [b.states.STARTED]),
+        for method_, states in [('start', [b.states.STARTED]),
                                ('stop', [b.states.STOPPED]),
                                ('start',
                                 [b.states.STARTING, b.states.STARTED]),
                                ('exit', [b.states.EXITING]),
                                ]:
-            threading.Thread(target=f, args=(method,)).start()
+            threading.Thread(target=f, args=(method_,)).start()
             b.wait(states)
 
             # The wait method MUST wait for the given state(s).
@@ -256,9 +256,9 @@ class BusMethodTests(unittest.TestCase):
 
         # Try a normal message.
         expected = []
-        for msg in ["O mah darlin'"] * 3 + ["Clementiiiiiiiine"]:
-            b.log(msg)
-            expected.append(msg)
+        for _msg in ["O mah darlin'"] * 3 + ["Clementiiiiiiiine"]:
+            b.log(_msg)
+            expected.append(_msg)
             self.assertLog(expected)
 
         # Try an error message

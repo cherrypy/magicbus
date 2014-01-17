@@ -345,12 +345,12 @@ class Bus(object):
     def wait(self, state, interval=0.1, channel=None):
         """Poll for the given state(s) at intervals; publish to channel."""
         if isinstance(state, (tuple, list)):
-            states = state
+            _states = state
         else:
-            states = [state]
+            _states = [state]
 
         def _wait():
-            while self.state not in states:
+            while self.state not in _states:
                 time.sleep(interval)
                 self.publish(channel)
 
@@ -423,9 +423,9 @@ class Bus(object):
             kwargs = {}
         args = (func,) + args
 
-        def _callback(func, *a, **kw):
+        def _callback(func_, *a, **kw):
             self.wait(states.STARTED)
-            func(*a, **kw)
+            func_(*a, **kw)
         t = threading.Thread(target=_callback, args=args, kwargs=kwargs)
         t.setName('Bus Callback ' + t.getName())
         t.start()
