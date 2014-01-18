@@ -17,7 +17,6 @@ except ImportError:
 
 
 class DropPrivileges(SimplePlugin):
-
     """Drop privileges. uid/gid arguments not available on Windows.
 
     Special thanks to Gavin Baker: http://antonym.org/node/100.
@@ -130,7 +129,6 @@ class DropPrivileges(SimplePlugin):
 
 
 class Daemonizer(SimplePlugin):
-
     """Daemonize the running script.
 
     Use this with a Bus via::
@@ -226,7 +224,6 @@ class Daemonizer(SimplePlugin):
 
 
 class PIDFile(SimplePlugin):
-
     """Maintain a PID file via a WSPBus."""
 
     def __init__(self, bus, pidfile):

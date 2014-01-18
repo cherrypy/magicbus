@@ -8,7 +8,6 @@ from magicbus.compat import basestring
 
 
 class SignalHandler(object):
-
     """Register bus channels (and listeners) for system signals.
 
     You can modify what signals your application listens for, and what it does

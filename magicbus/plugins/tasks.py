@@ -29,7 +29,6 @@ _module__file__base = os.getcwd()
 
 
 class PerpetualTimer(TimerClass):
-
     """A responsive subclass of threading.Timer whose run() method repeats.
 
     Use this timer only when you really need a very interruptible timer;
@@ -52,7 +51,6 @@ class PerpetualTimer(TimerClass):
 
 
 class BackgroundTask(threading.Thread):
-
     """A subclass of threading.Thread whose run() method repeats.
 
     Use this class for most repeating tasks. It uses time.sleep() to wait
@@ -102,7 +100,6 @@ class BackgroundTask(threading.Thread):
 
 
 class Monitor(SimplePlugin):
-
     """WSPBus listener to periodically run a callback in its own thread."""
 
     callback = None
@@ -158,7 +155,6 @@ class Monitor(SimplePlugin):
 
 
 class Autoreloader(Monitor):
-
     """Monitor which re-executes the process when files change.
 
     This :ref:`plugin<plugins>` restarts the process (via :func:`os.execv`)
@@ -255,7 +251,6 @@ class Autoreloader(Monitor):
 
 
 class ThreadManager(SimplePlugin):
-
     """Manager for HTTP request threads.
 
     If you have control over thread creation and destruction, publish to

@@ -75,7 +75,6 @@ _startup_cwd = os.getcwd()
 
 
 class ChannelFailures(Exception):
-
     """Exception raised when errors occur in a listener during Bus.publish().
     """
     delimiter = '\n'
@@ -136,7 +135,6 @@ else:
 
 
 class Bus(object):
-
     """Process state-machine and messenger.
 
     All listeners for a given channel are guaranteed to be called even
