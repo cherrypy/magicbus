@@ -2,7 +2,8 @@ import threading
 import time
 import unittest
 
-from magicbus import Bus, ChannelFailures
+from magicbus.base import Bus, ChannelFailures
+from magicbus.process import ProcessBus
 
 
 msg = "Listener %d on channel %s: %s."
@@ -16,7 +17,7 @@ class PublishSubscribeTests(unittest.TestCase):
         return listener
 
     def test_builtin_channels(self):
-        b = Bus()
+        b = ProcessBus()
 
         self.responses, expected = [], []
 
@@ -89,7 +90,7 @@ class BusMethodTests(unittest.TestCase):
         return listener
 
     def test_start(self):
-        b = Bus()
+        b = ProcessBus()
         self.log(b)
 
         self.responses = []
@@ -114,7 +115,7 @@ class BusMethodTests(unittest.TestCase):
             b.exit()
 
     def test_stop(self):
-        b = Bus()
+        b = ProcessBus()
         self.log(b)
 
         self.responses = []
@@ -133,7 +134,7 @@ class BusMethodTests(unittest.TestCase):
         self.assertLog(['Bus STOPPING', 'Bus STOPPED'])
 
     def test_graceful(self):
-        b = Bus()
+        b = ProcessBus()
         self.log(b)
 
         self.responses = []
@@ -152,7 +153,7 @@ class BusMethodTests(unittest.TestCase):
         self.assertLog(['Bus graceful'])
 
     def test_exit(self):
-        b = Bus()
+        b = ProcessBus()
         self.log(b)
 
         self.responses = []
@@ -175,17 +176,17 @@ class BusMethodTests(unittest.TestCase):
             ['Bus STOPPING', 'Bus STOPPED', 'Bus EXITING', 'Bus EXITED'])
 
     def test_wait(self):
-        b = Bus()
+        b = ProcessBus()
 
         def f(method):
             time.sleep(0.2)
             getattr(b, method)()
 
         for method_, states in [('start', [b.states.STARTED]),
-                               ('stop', [b.states.STOPPED]),
-                               ('start',
-                                [b.states.STARTING, b.states.STARTED]),
-                               ('exit', [b.states.EXITING]),
+                                ('stop', [b.states.STOPPED]),
+                                ('start',
+                                 [b.states.STARTING, b.states.STARTED]),
+                                ('exit', [b.states.EXITING]),
                                ]:
             threading.Thread(target=f, args=(method_,)).start()
             b.wait(states)
@@ -195,7 +196,7 @@ class BusMethodTests(unittest.TestCase):
                 self.fail("State %r not in %r" % (b.state, states))
 
     def test_block(self):
-        b = Bus()
+        b = ProcessBus()
         self.log(b)
 
         def f():
@@ -210,6 +211,7 @@ class BusMethodTests(unittest.TestCase):
         threads = [t for t in threading.enumerate() if not t.daemon]
         self.assertEqual(len(threads), 3)
 
+        print(b)
         b.block()
 
         # The block method MUST wait for the EXITING state.
@@ -220,13 +222,19 @@ class BusMethodTests(unittest.TestCase):
         self.assertEqual(len(threads), 1)
         # The last message will mention an indeterminable thread name; ignore
         # it
-        self.assertEqual(self._log_entries[:-1],
-                         ['Bus STOPPING', 'Bus STOPPED',
-                          'Bus EXITING', 'Bus EXITED',
-                          'Waiting for child threads to terminate...'])
+        self.assertEqual(
+            [entry for entry in self._log_entries
+             if not entry.startswith("Waiting")],
+            [
+                'Bus STOPPING',
+                'Bus STOPPED',
+                'Bus EXITING',
+                'Bus EXITED',
+            ]
+        )
 
     def test_start_with_callback(self):
-        b = Bus()
+        b = ProcessBus()
         self.log(b)
         try:
             events = []

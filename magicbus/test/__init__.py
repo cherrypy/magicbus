@@ -30,7 +30,7 @@ class Process(object):
 
     def start(self):
         # Exceptions in the child will be re-raised in the parent,
-        # so if yyou're expecting one, trap this call and check for it.
+        # so if you're expecting one, trap this call and check for it.
         cwd = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
         env = os.environ.copy()
         env['PYTHONPATH'] = cwd
