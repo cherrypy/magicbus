@@ -1,6 +1,6 @@
 """Compatibility code for using magicbus with various versions of Python.
 
-Process Bus 3.3 is compatible with Python versions 2.7+. This module provides a
+Magic Bus 3.3 is compatible with Python versions 2.7+. This module provides a
 useful abstraction over the differences between Python versions, sometimes by
 preferring a newer idiom, sometimes an older one, and sometimes a custom one.
 
