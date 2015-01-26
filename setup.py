@@ -18,12 +18,12 @@ import sys
 # arguments for the setup command
 ###############################################################################
 name = "MagicBus"
-version = "3.3.0alpha"
+version = "4.0.0b1"
 desc = "An implementation of the Web Site Process Bus"
 long_desc = ("The Process Bus is a publish/subscribe architecture that"
              " loosely connects components with services.")
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Environment :: Web Environment",
     "Intended Audience :: Developers",
     "License :: Freely Distributable",
@@ -43,7 +43,6 @@ packages = [
     "magicbus", "magicbus.plugins",
     "magicbus.test",
 ]
-download_url = "http://download.cherrypy.org/magicbus/3.3.0alpha/"
 data_files = [
     ('magicbus', ['magicbus/LICENSE.txt']),
     ('magicbus/plugins', []),
@@ -88,7 +87,6 @@ def main():
         url=url,
         license=cp_license,
         packages=packages,
-        download_url=download_url,
         data_files=data_files,
     )
 
