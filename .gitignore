@@ -1,0 +1,52 @@
+*.py[cod]
+*.orig
+setup.cfg
+
+# C extensions
+*.c
+*.o
+*.so
+*.html
+
+# Packages
+*.egg
+*.egg-info
+dist
+build
+eggs
+parts
+bin
+var
+sdist
+develop-eggs
+.installed.cfg
+lib
+lib64
+
+# Installer logs
+pip-log.txt
+
+# Unit test / coverage reports / profiling output
+.coverage
+.tox
+nosetests.xml
+*.prof
+
+# Translations
+*.mo
+
+# Mr Developer
+.mr.developer.cfg
+.project
+.pydevproject
+.idea
+
+#Git artifacts
+*.rej
+
+# other dev. stuff
+TAGS
+*.stats
+*.log
+
+.DS_Store

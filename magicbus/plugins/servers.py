@@ -4,13 +4,13 @@ Multiple servers/ports
 
 If you need to start more than one HTTP server (to serve on multiple ports, or
 protocols, etc.), you can manually register each one and then start them all
-with bus.start::
+with bus.transition("RUN")::
 
     s1 = ServerPlugin(bus, MyWSGIServer(host='0.0.0.0', port=80))
     s2 = ServerPlugin(bus, another.HTTPServer(host='127.0.0.1', SSL=True))
     s1.subscribe()
     s2.subscribe()
-    bus.start()
+    bus.transition("RUN")
 
 .. index:: SCGI
 
@@ -97,9 +97,9 @@ class ServerPlugin(object):
         * wrap HTTP servers whose accept loop blocks by running it in a
           separate thread; any exceptions in it exit the bus
         * wait until the server is truly ready to receive requests before
-          returning from the bus.start listener
+          returning from the bus START listener
         * wait until the server has finished processing requestss before
-          returning from the bus.stop listener
+          returning from the bus STOP listener
         * log server start/stop via the bus
 
     The httpserver argument MUST possess 'start' and 'stop' methods,
@@ -108,13 +108,13 @@ class ServerPlugin(object):
 
     If you need to start more than one HTTP server (to serve on multiple
     ports, or protocols, etc.), you can manually register each one and then
-    start them all with bus.start::
+    start them all with bus.transition("RUN")::
 
         s1 = ServerPlugin(bus, MyWSGIServer(host='0.0.0.0', port=80))
         s2 = ServerPlugin(bus, another.HTTPServer(host='127.0.0.1', SSL=True))
         s1.subscribe()
         s2.subscribe()
-        bus.start()
+        bus.transition("RUN")
     """
 
     def __init__(self, bus, httpserver=None, bind_addr=None):
@@ -125,12 +125,12 @@ class ServerPlugin(object):
         self.running = False
 
     def subscribe(self):
-        self.bus.subscribe('start', self.start)
-        self.bus.subscribe('stop', self.stop)
+        self.bus.subscribe('START', self.START)
+        self.bus.subscribe('STOP', self.STOP)
 
     def unsubscribe(self):
-        self.bus.unsubscribe('start', self.start)
-        self.bus.unsubscribe('stop', self.stop)
+        self.bus.unsubscribe('START', self.START)
+        self.bus.unsubscribe('STOP', self.STOP)
 
     @property
     def interface(self):
@@ -142,7 +142,7 @@ class ServerPlugin(object):
         else:
             return "socket file: %s" % self.bind_addr
 
-    def start(self):
+    def START(self):
         """Start the HTTP server."""
         if self.running:
             self.bus.log("Already serving on %s" % self.interface)
@@ -164,7 +164,7 @@ class ServerPlugin(object):
         self.wait()
         self.running = True
         self.bus.log("Serving on %s" % self.interface)
-    start.priority = 75
+    START.priority = 75
 
     def _start_http_thread(self):
         """HTTP servers MUST be running in new threads, so that the
@@ -178,17 +178,17 @@ class ServerPlugin(object):
         except KeyboardInterrupt:
             self.bus.log("<Ctrl-C> hit: shutting down HTTP server")
             self.interrupt = sys.exc_info()[1]
-            self.bus.exit()
+            self.bus.transition("EXITED")
         except SystemExit:
             self.bus.log("SystemExit raised: shutting down HTTP server")
             self.interrupt = sys.exc_info()[1]
-            self.bus.exit()
+            self.bus.transition("EXITED")
             raise
         except:
             self.interrupt = sys.exc_info()[1]
             self.bus.log("Error in HTTP server: shutting down",
                          traceback=True, level=40)
-            self.bus.exit()
+            self.bus.transition("EXITED")
             raise
 
     def wait(self):
@@ -204,7 +204,7 @@ class ServerPlugin(object):
             self.bus.log("Waiting for %s" % self.interface)
             wait_for_occupied_port(host, port)
 
-    def stop(self):
+    def STOP(self):
         """Stop the HTTP server."""
         if self.running:
             # stop() MUST block until the server is *truly* stopped.
@@ -216,15 +216,11 @@ class ServerPlugin(object):
             self.bus.log("HTTP Server %s shut down" % self.httpserver)
         else:
             self.bus.log("HTTP Server %s already shut down" % self.httpserver)
-    stop.priority = 25
-
-    def restart(self):
-        """Restart the HTTP server."""
-        self.stop()
-        self.start()
+    STOP.priority = 25
 
 
 # ------- Wrappers for various HTTP servers for use with ServerPlugin ------- #
+# These are not plugins, so they don't use the bus states as method names.
 
 class FlupCGIServer(object):
     """Adapter for a flup.server.cgi.WSGIServer."""

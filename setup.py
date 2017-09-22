@@ -18,12 +18,12 @@ import sys
 # arguments for the setup command
 ###############################################################################
 name = "MagicBus"
-version = "4.0.0b1"
-desc = "An implementation of the Web Site Process Bus"
+version = "5.0.0a"
+desc = "A pub/sub state machine"
 long_desc = ("The Process Bus is a publish/subscribe architecture that"
              " loosely connects components with services.")
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Alpha",
     "Environment :: Web Environment",
     "Intended Audience :: Developers",
     "License :: Freely Distributable",

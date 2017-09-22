@@ -119,7 +119,7 @@ class Monitor(SimplePlugin):
         self.thread = None
         self.name = name
 
-    def start(self):
+    def START(self):
         """Start our callback in its own background thread."""
         if self.frequency > 0:
             threadname = self.name or self.__class__.__name__
@@ -131,9 +131,9 @@ class Monitor(SimplePlugin):
                 self.bus.log("Started monitor thread %r." % threadname)
             else:
                 self.bus.log("Monitor thread %r already started." % threadname)
-    start.priority = 70
+    START.priority = 70
 
-    def stop(self):
+    def STOP(self):
         """Stop our callback's background task thread."""
         if self.thread is None:
             self.bus.log("No thread running for %s." %
@@ -147,11 +147,6 @@ class Monitor(SimplePlugin):
                     self.thread.join()
                 self.bus.log("Stopped thread %r." % name)
             self.thread = None
-
-    def graceful(self):
-        """Stop the callback's background task thread and restart it."""
-        self.stop()
-        self.start()
 
 
 class Autoreloader(Monitor):
@@ -190,12 +185,12 @@ class Autoreloader(Monitor):
         self.match = match
         Monitor.__init__(self, bus, self.run, frequency)
 
-    def start(self):
+    def START(self):
         """Start our own background task thread for self.run."""
         if self.thread is None:
             self.mtimes = {}
-        Monitor.start(self)
-    start.priority = 70
+        Monitor.START(self)
+    START.priority = 70
 
     def sysfiles(self):
         """Return a Set of sys.modules filenames to monitor."""
@@ -298,9 +293,8 @@ class ThreadManager(SimplePlugin):
         if i is not None:
             self.bus.publish('stop_thread', i)
 
-    def stop(self):
+    def STOP(self):
         """Release all threads and run all 'stop_thread' listeners."""
         for thread_ident, i in self.threads.items():
             self.bus.publish('stop_thread', i)
         self.threads.clear()
-    graceful = stop

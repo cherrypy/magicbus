@@ -10,7 +10,12 @@ messaging to accomplish all this. Frameworks and site containers
 are free to define their own channels. If a message is sent to a
 channel that has not been defined or has no listeners, there is no effect.
 """
-
+import os
+import random
+try:
+    import select
+except ImportError:
+    select = None
 import sys
 import time
 import traceback as _traceback
@@ -57,68 +62,204 @@ class StateEnum(object):
     pass
 
 
+class Graph(dict):
+    """A map of {(A, C): B} where B is next in the shortest path from A to C.
+
+    Each key is a 2-tuple of nodes (A, C), and the corresponding value is
+    the next node B to take on the shortest path between them. For example,
+    the Graph {("A", "B"): "B", ("A", "C"): "B"} declares that the shortest
+    path from A to B is directly to B, while the shortest path from
+    A to C starts by moving to B. Calling code can find the shortest path
+    [Pa, ..., Pz] by iteratively calling self.get((Pn, Pz)).
+
+    Any pair (A, B) not in the map has no path.
+    """
+
+    @property
+    def states(self):
+        """The set of all states in the graph."""
+        s = set(self.values())
+        for a, b in self:
+            s.add(a)
+            s.add(b)
+        return s
+
+    @classmethod
+    def from_edges(cls, edges):
+        """Form a Graph instance from the given {from: (to1, to2)} dict.
+
+        The given 'edges' dictionary includes a key for each node from
+        which a transition might originate. The corresponding value is
+        either a node or a tuple of nodes; the graph includes an edge
+        from the key node to each node in the value. For example, the
+        dict {"A": "B", "B", ("C", "D")} defines 3 edges: A to B,
+        B to C and B to D.
+        """
+        # Modified Floyd-Warshall algorithm, where all weights are 1.
+        # Rather than a sparse matrix, we build a map {(A, B): next}
+        # where the "next" value is the next node on the shortest path
+        # from A to B. Any pair (a, b) not in the map has no path.
+        # Thereby, calling code can find the shortest path [Pn, Pn+1, ...]
+        # by iteratively calling self.get((Pn, Pn+1), None)
+        if edges is None:
+            edges = {}
+        states = set()
+
+        distances = {}
+        next = {}
+        for k, v in edges.items():
+            states.add(k)
+            distances[(k, k)] = 0
+
+            if not isinstance(v, (list, tuple)):
+                v = (v,)
+            for s in v:
+                states.add(s)
+                # Store the edge from k to s.
+                distances[(k, s)] = 1
+                next[(k, s)] = s
+
+        for k in states:
+            for i in states:
+                for j in states:
+                    segment1 = distances.get((i, k))
+                    if segment1 is None:
+                        continue
+                    segment2 = distances.get((k, j))
+                    if segment2 is None:
+                        continue
+                    candidate_distance = segment1 + segment2
+
+                    curpair = (i, j)
+                    current_distance = distances.get(curpair)
+                    if current_distance is None or current_distance > candidate_distance:
+                        # print ("(%s -> %s) %s > (%s -> %s -> %s) %s" %
+                        #        (i, j, current_distance,
+                        #         i, k, j, candidate_distance))
+                        distances[curpair] = candidate_distance
+                        next[curpair] = next.get((i, k), k)
+
+        return cls(next)
+
+
 class Bus(object):
     """State machine and pub/sub messenger.
 
-    All listeners for a given channel are guaranteed to be called even
-    if others at the same channel fail. Each failure is logged, but
-    execution proceeds on to the next listener. The only way to stop all
-    processing from inside a listener is to raise SystemExit and stop the
-    whole server.
+    If the 'select' module is present (POSIX systems), then select.select()
+    (on an os.pipe) will be used in self.wait instead of time.sleep().
     """
 
-    def __init__(self, states=None, state=None, channels=None):
-        if isinstance(states, StateEnum):
-            self.states = states
-        else:
-            self.states = StateEnum()
-            for s in states or []:
-                setattr(self.states, s, State(s))
+    publish_exception_class = ChannelFailures
 
-        if state is not None:
-            state = getattr(self.states, state)
-        self.state = state
+    def __init__(self, transitions=None, errors=None,
+                 initial_state=None, extra_channels=None, id=None):
+        if not isinstance(transitions, Graph):
+            transitions = Graph.from_edges(transitions)
+        self.transitions = transitions
+        self.errors = errors
+        self.state = initial_state
 
-        if channels is None:
-            channels = ('log',)
-        self.listeners = dict((channel, set()) for channel in channels)
+        self.listeners = dict((c, set()) for c in self.states)
+        if extra_channels is None:
+            extra_channels = ('log',)
+        for c in extra_channels:
+            self.listeners[c] = set()
 
+        if id is None:
+            id = hex(random.randint(0, sys.maxint))[-8:]
+        self.id = id
         self._priorities = {}
-        self.debug = False
 
-    def subscribe(self, channel, callback, priority=None):
-        """Add the given callback at the given channel (if not present)."""
+        if select:
+            (self._state_transition_pipe_read,
+             self._state_transition_pipe_write) = os.pipe()
+        else:
+            (self._state_transition_pipe_read,
+             self._state_transition_pipe_write) = (None, None)
+
+    @property
+    def states(self):
+        return self.transitions.states
+
+    def transition(self, desired_state):
+        """Move to the desired state. Return output (list of lists)."""
+        output = []
+        while self.state != desired_state:
+            next_state = self.transitions.get((self.state, desired_state))
+            if next_state is None:
+                # Cannot proceed any further.
+                break
+            output.append(self._transition(next_state))
+        return output
+
+    def _transition(self, newstate, *args, **kwargs):
+        """Transition and publish to the new state. Return output list.
+
+        This method should only be called if there is a registered
+        1-hop transition between the current state and the new state.
+
+        Any *args or **kwargs will be passed to the publish call.
+        Error transitions, for example, pass *sys.exc_info() as
+        positional arguments to all error listeners.
+        """
+        try:
+            self.state = newstate
+            if self._state_transition_pipe_write is not None:
+                os.write(self._state_transition_pipe_write, "1")
+
+            # Note: logging here means 1) the initial transition
+            # will not be logged if loggers are set up in the initial
+            # transition! and 2) the final transition will not be logged
+            # if loggers are torn down in the penultimate transition!
+            # This is why, for example, the included loggers are
+            # "always on" rather than listening for start/stop themselves.
+            self.log('Bus state: %s' % newstate)
+
+            return self.publish(newstate, *args, **kwargs)
+        except self.throws:
+            raise
+        except:
+            if newstate in self.errors:
+                # Note we are calling the private method here;
+                # we do not allow a multi-hop transition to an error
+                # state, because we want to pass the exc_info around.
+                self._transition(self.errors[newstate], *sys.exc_info())
+            else:
+                raise
+
+    def subscribe(self, channel, callee, priority=None):
+        """Add the given callee at the given channel (if not present)."""
         if channel not in self.listeners:
             self.listeners[channel] = set()
-        self.listeners[channel].add(callback)
+        self.listeners[channel].add(callee)
 
         if priority is None:
-            priority = getattr(callback, 'priority', 50)
-        self._priorities[(channel, callback)] = priority
+            priority = getattr(callee, 'priority', 50)
+        self._priorities[(channel, callee)] = priority
 
-    def unsubscribe(self, channel, callback):
-        """Discard the given callback (if present)."""
+    def unsubscribe(self, channel, callee):
+        """Discard the given callee (if present)."""
         listeners = self.listeners.get(channel)
-        if listeners and callback in listeners:
-            listeners.discard(callback)
-            del self._priorities[(channel, callback)]
+        if listeners and callee in listeners:
+            listeners.discard(callee)
+            del self._priorities[(channel, callee)]
 
     def clear(self):
-        """Discard all subscribed callbacks."""
+        """Discard all subscribed callees."""
         # Use items() as a snapshot instead of while+pop so that callers
         # can be slightly lax in subscribing new listeners while the old
         # ones are being removed.
         for channel, listeners in self.listeners.items():
-            for callback in list(listeners):
-                listeners.discard(callback)
-                del self._priorities[(channel, callback)]
+            for callee in list(listeners):
+                listeners.discard(callee)
+                del self._priorities[(channel, callee)]
 
     def publish(self, channel, *args, **kwargs):
         """Return output of all subscribers for the given channel."""
         if channel not in self.listeners:
             return []
 
-        exc = ChannelFailures()
+        exc = self.publish_exception_class()
         output = []
 
         items = [(self._priorities[(channel, listener)], listener)
@@ -126,24 +267,23 @@ class Bus(object):
         items.sort(key=lambda item: item[0])
         for priority, listener in items:
             try:
-                if self.debug and channel != 'log':
-                    self.log("Publishing to %s: %s(*%s, **%s)" %
-                             (channel, listener, args, kwargs))
+                # Listeners are guaranteed to run even if others on the
+                # the same channel fail. We will still log the failure,
+                # but proceed on to the next listener. The only way
+                # to stop all processing from inside a listener is
+                # to raise one of the exceptions in self.throws
+                # (e.g. SystemExit).
                 result = listener(*args, **kwargs)
-                if self.debug and channel != 'log':
-                    self.log("Publishing to %s: %s(*%s, **%s) = %s" %
-                             (channel, listener, args, kwargs, result))
                 output.append(result)
-            except KeyboardInterrupt:
-                raise
-            except SystemExit:
-                e = sys.exc_info()[1]
-                # If we have previous errors ensure the exit code is non-zero
-                if exc and e.code == 0:
-                    e.code = 1
+            except self.throws:
+                # e = sys.exc_info()[1]
+                # # If we have previous errors ensure the exit code is non-zero
+                # if exc and e.code == 0:
+                #     e.code = 1
                 raise
             except:
                 exc.handle_exception()
+
                 if channel == 'log':
                     # Assume any further messages to 'log' will fail.
                     pass
@@ -163,7 +303,17 @@ class Bus(object):
 
         def _wait():
             while self.state not in _states_to_wait_for:
-                time.sleep(interval)
+                if self._state_transition_pipe_read is not None:
+                    try:
+                        select.select([self._state_transition_pipe_read], [], [], interval)
+                        os.read(self._state_transition_pipe_read, 1)
+                    except (select.error, OSError):
+                        # Interrupted due to a signal (being handled by some
+                        # other thread). No need to panic, here, just check
+                        # the new state and proceed/return.
+                        pass
+                else:
+                    time.sleep(interval)
                 self.publish(channel)
 
         # From http://psyco.sourceforge.net/psycoguide/bugs.html:
@@ -182,5 +332,9 @@ class Bus(object):
     def log(self, msg="", level=20, traceback=False):
         """Log the given message. Append the last traceback if requested."""
         if traceback:
-            msg += "\n" + "".join(_traceback.format_exception(*sys.exc_info()))
+            if traceback is True:
+                exc_info = sys.exc_info()
+            else:
+                exc_info = traceback
+            msg += "\n" + "".join(_traceback.format_exception(*exc_info))
         self.publish('log', msg, level)

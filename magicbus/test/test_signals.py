@@ -8,7 +8,8 @@ from magicbus.plugins import loggers, opsys, signalhandler
 from magicbus.test import assertNotEqual
 from magicbus.test import Process
 
-loggers.FileLogger(bus, "test_signals.log").subscribe()
+logfile = os.path.join(os.path.dirname(thismodule), 'test_signals.log')
+loggers.FileLogger(bus, logfile).subscribe()
 pidfile = opsys.PIDFile(bus, os.path.join(thismodule + ".pid"))
 
 
@@ -29,13 +30,13 @@ class TestSignalHandling(object):
         p = Process([sys.executable, thismodule, "tty"])
         p.start()
         pid = pidfile.wait()
-        os.kill(pid, SIGHUP)
+        kill(pid, SIGHUP)
         pidfile.join()
 
     def test_SIGHUP_daemonized(self):
         # When daemonized, SIGHUP should restart the server.
         try:
-            from signal import SIGHUP, SIGTERM, SIGKILL
+            from signal import SIGHUP, SIGTERM
         except ImportError:
             return "skipped (no SIGHUP)"
 
@@ -47,16 +48,19 @@ class TestSignalHandling(object):
         if os.name not in ['posix']:
             return "skipped (not on posix)"
 
+        os.remove(logfile)
+
         p = Process([sys.executable, thismodule, "daemonize"])
         p.start()
         pid = pidfile.wait()
-        os.kill(pid, SIGHUP)
+        kill(pid, SIGHUP)
 
         # Give the server some time to restart
         time.sleep(1)
-        new_pid = pidfile.wait()
+        new_pid = pidfile.wait(5)
+        assertNotEqual(new_pid, None)
         assertNotEqual(new_pid, pid)
-        os.kill(new_pid, SIGTERM)
+        kill(new_pid, SIGTERM)
         pidfile.join()
 
     def test_SIGTERM_tty(self):
@@ -75,7 +79,7 @@ class TestSignalHandling(object):
         p = Process([sys.executable, thismodule, "tty"])
         p.start()
         pid = pidfile.wait()
-        os.kill(pid, SIGTERM)
+        kill(pid, SIGTERM)
         pidfile.join()
 
     def test_SIGTERM_daemonized(self):
@@ -97,7 +101,7 @@ class TestSignalHandling(object):
         p = Process([sys.executable, thismodule, "daemonize"])
         p.start()
         pid = pidfile.wait()
-        os.kill(pid, SIGTERM)
+        kill(pid, SIGTERM)
         pidfile.join()
 
 
@@ -107,6 +111,5 @@ if __name__ == '__main__':
         opsys.Daemonizer(bus).subscribe()
     pidfile.subscribe()
     signalhandler.SignalHandler(bus).subscribe()
-    bus.debug = True
-    bus.start()
+    bus.transition("RUN")
     bus.block()

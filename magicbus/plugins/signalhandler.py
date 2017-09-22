@@ -14,17 +14,15 @@ class SignalHandler(object):
     when it receives signals, by modifying :attr:`SignalHandler.handlers`,
     a dict of {signal name: callback} pairs. The default set is::
 
-        handlers = {'SIGTERM': self.bus.exit,
+        handlers = {'SIGTERM': self.bus.transition("EXITED"),
                     'SIGHUP': self.handle_SIGHUP,
-                    'SIGUSR1': self.bus.graceful,
+                    'SIGUSR1': self.bus.transition("IDLE" -> "RUN"),
                    }
 
-    The :func:`SignalHandler.handle_SIGHUP`` method calls
-    :func:`bus.restart()<magicbus.Bus.restart>`
-    if the process is daemonized, but
-    :func:`bus.exit()<magicbus.Bus.exit>`
-    if the process is attached to a TTY. This is because Unix window
-    managers tend to send SIGHUP to terminal windows when the user closes them.
+    The :func:`SignalHandler.handle_SIGHUP`` method calls execv if the process
+    is daemonized, but exits if the process is attached to a TTY. This is
+    because Unix window managers tend to send SIGHUP to terminal windows
+    when the user closes them.
 
     Feel free to add signals which are not available on every platform. The
     :class:`SignalHandler` will ignore errors raised from attempting to
@@ -32,7 +30,7 @@ class SignalHandler(object):
     """
 
     handlers = {}
-    """A map from signal names (e.g. 'SIGTERM') to handlers (e.g. bus.exit)."""
+    """A map from signal names (e.g. 'SIGTERM') to handlers."""
 
     signals = {}
     """A map from signal numbers to names."""
@@ -45,7 +43,7 @@ class SignalHandler(object):
     def __init__(self, bus):
         self.bus = bus
         # Set default handlers
-        self.handlers = {'SIGTERM': self.bus.exit,
+        self.handlers = {'SIGTERM': self.handle_SIGTERM,
                          'SIGHUP': self.handle_SIGHUP,
                          'SIGUSR1': self.bus.graceful,
                          }
@@ -62,10 +60,10 @@ class SignalHandler(object):
     def _jython_SIGINT_handler(self, signum=None, frame=None):
         # See http://bugs.jython.org/issue1313
         self.bus.log('Keyboard Interrupt: shutting down bus')
-        self.bus.exit()
+        self.bus.transition("EXITED")
 
     def subscribe(self):
-        self.bus.subscribe('start', self.subscribe_handlers)
+        self.bus.subscribe('ENTER', self.subscribe_handlers)
 
     def subscribe_handlers(self):
         """Subscribe self.handlers to signals."""
@@ -74,7 +72,7 @@ class SignalHandler(object):
                 self.set_handler(sig, func)
             except ValueError:
                 pass
-    # Only run after Daemonizer.start
+    # Only run after Daemonizer.ENTER (65)
     subscribe_handlers.priority = 70
 
     def unsubscribe(self):
@@ -132,12 +130,17 @@ class SignalHandler(object):
         self.bus.log("Caught signal %s." % signame)
         self.bus.publish(signame)
 
+    def handle_SIGTERM(self):
+        """Transition to the EXITED state."""
+        self.bus.log("SIGTERM caught. Exiting.")
+        self.bus.transition("EXITED")
+
     def handle_SIGHUP(self):
         """Restart if daemonized, else exit."""
         if os.isatty(sys.stdin.fileno()):
             # not daemonized (may be foreground or background)
             self.bus.log("SIGHUP caught but not daemonized. Exiting.")
-            self.bus.exit()
+            self.bus.transition("EXITED")
         else:
             self.bus.log("SIGHUP caught while daemonized. Restarting.")
             self.bus.restart()
