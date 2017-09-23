@@ -173,3 +173,4 @@ ENV/
 /.coverage
 /coverage.xml
 /graph_Request_*.png
+*.swp
