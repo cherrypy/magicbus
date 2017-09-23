@@ -18,7 +18,6 @@ import sys
 # arguments for the setup command
 ###############################################################################
 name = "MagicBus"
-version = "4.0.0b1"
 desc = "An implementation of the Web Site Process Bus"
 long_desc = ("The Process Bus is a publish/subscribe architecture that"
              " loosely connects components with services.")
@@ -78,7 +77,7 @@ def main():
 
     setup(
         name=name,
-        version=version,
+        use_scm_version=True,
         description=desc,
         long_description=long_desc,
         classifiers=classifiers,
@@ -88,6 +87,7 @@ def main():
         license=cp_license,
         packages=packages,
         data_files=data_files,
+        setup_requires=['setuptools_scm', ],
     )
 
 
