@@ -157,7 +157,7 @@ install:
 - pip install tox "setuptools>=28.2"
 
 script:
-- tox -epython
+- tox -e${TOXENV-python}
 
 after_failure:
 - echo "Here's a list of installed Python packages:"
