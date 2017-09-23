@@ -82,6 +82,12 @@ jobs:
   allow_failures:
   - env: &pep257_env TOXENV=pre-commit-pep257
   - env: &pre-commit_env TOXENV=pre-commit
+  # pypy2.7 succeeds locally
+  - python: *pypy2
+    os: linux
+  # pypy3.5 fails locally like in Travis
+  - python: *pypy3
+    os: linux
   include:
   - <<: *lint_python_base
     env: *pre-commit_env
