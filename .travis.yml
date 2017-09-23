@@ -88,6 +88,8 @@ jobs:
   # pypy3.5 fails locally like in Travis
   - python: *pypy3
     os: linux
+  # OS X environment is extremely unstable
+  - os: linux
   include:
   - <<: *lint_python_base
     env: *pre-commit_env
