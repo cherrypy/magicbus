@@ -154,7 +154,7 @@ jobs:
       user: jaraco
       distributions: bdist_wheel sdist
       password:
-        secure: RAfz06AINvz7bfij/YhfkAreRqamgxS8a6jSRNxntYhtJke3ZszUbIDag8+n1I+G5XT2LnMhHqPNR7Plc+AeMz7VXTuy+b81Li5kse20NYlPhd7mBVmTUpXtqYQashV5J39F4qkATBLznCOrMEomM07VTXjO/o2hmQuXniab2Uo=
+        secure: rGooTu2PXDe+83QGlXVyfrMFZkUJ78qNMj6TRpLDz1Mb+SEx9HazxxrcURtNBemHlx9bebUYV0Ue2xgkK4vUFw2vyD3WVaXBJTQQkkKsGlUZy27NgOqqNxR3igQqloM1oVg7+NZqRvuAhoTTkhA9btp7l6CZ4tp8JfljO9b9TAw=
 
 cache:
   pip: true
