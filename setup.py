@@ -22,7 +22,7 @@ desc = "A pub/sub state machine"
 long_desc = ("The Process Bus is a publish/subscribe architecture that"
              " loosely connects components with services.")
 classifiers = [
-    "Development Status :: 5 - Alpha",
+    "Development Status :: 3 - Alpha",
     "Environment :: Web Environment",
     "Intended Audience :: Developers",
     "License :: Freely Distributable",
@@ -68,7 +68,7 @@ if 'bdist_wininst' in sys.argv or '--format=wininst' in sys.argv:
 def main():
     if sys.version < required_python_version:
         s = "I'm sorry, but %s %s requires Python %s or later."
-        print(s % (name, version, required_python_version))
+        print(s % (name, sys.version, required_python_version))
         sys.exit(1)
     # set default location for "data_files" to
     # platform specific "site-packages" location

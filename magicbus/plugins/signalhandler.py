@@ -16,7 +16,7 @@ class SignalHandler(object):
 
         handlers = {'SIGTERM': self.bus.transition("EXITED"),
                     'SIGHUP': self.handle_SIGHUP,
-                    'SIGUSR1': self.bus.transition("IDLE" -> "RUN"),
+                    'SIGUSR1': self.bus.transition("IDLE"); self.bus.transition("RUN"),
                    }
 
     The :func:`SignalHandler.handle_SIGHUP`` method calls execv if the process
