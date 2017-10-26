@@ -305,8 +305,9 @@ class Bus(object):
             while self.state not in _states_to_wait_for:
                 if self._state_transition_pipe_read is not None:
                     try:
-                        select.select([self._state_transition_pipe_read], [], [], interval)
-                        os.read(self._state_transition_pipe_read, 1)
+                        r, w, x = select.select([self._state_transition_pipe_read], [], [], interval)
+                        if r:
+                            os.read(self._state_transition_pipe_read, 1)
                     except (select.error, OSError):
                         # Interrupted due to a signal (being handled by some
                         # other thread). No need to panic, here, just check

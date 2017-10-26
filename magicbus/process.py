@@ -1,6 +1,5 @@
 import os
 import threading
-import sys
 
 from magicbus import base
 from magicbus.plugins import lifecycle
