@@ -2,6 +2,10 @@ dist: trusty
 sudo: false
 language: python
 
+matrix:
+  allow_failures:
+  - python: 3.6
+
 jobs:
   fast_finish: true
   include:
