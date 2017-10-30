@@ -9,20 +9,8 @@
 The Process Bus is a publish/subscribe architecture that
 loosely connects components with services.
 
-========
-MagicBus
-========
+Testing
+=======
 
-* To install, change to the directory where setup.py is located and
-  type (python-2.7, python-3.3 or later needed):
-
-    python setup.py install
-
-* To run the regression tests, just go to the magicbus/test/ directory
-  and type:
-
-    nosetests -s ./
-
-  Or to run individual tests type:
-
-    nosetests -s test_foo.py
+To run the test suite, install and run `tox
+<https://pypi.org/project/tox>`_.
