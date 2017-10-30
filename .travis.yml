@@ -1,5 +1,3 @@
-language: python
-
 os: linux
 dist: trusty
 
@@ -152,7 +150,7 @@ jobs:
         tags: true
         all_branches: true
       user: jaraco
-      distributions: bdist_wheel sdist
+      distributions: dists
       password:
         secure: rGooTu2PXDe+83QGlXVyfrMFZkUJ78qNMj6TRpLDz1Mb+SEx9HazxxrcURtNBemHlx9bebUYV0Ue2xgkK4vUFw2vyD3WVaXBJTQQkkKsGlUZy27NgOqqNxR3igQqloM1oVg7+NZqRvuAhoTTkhA9btp7l6CZ4tp8JfljO9b9TAw=
 
@@ -163,7 +161,7 @@ cache:
   - $HOME/Library/Caches/Homebrew
 
 install:
-- pip install tox "setuptools>=28.2"
+- pip install tox
 
 script:
 - tox -e${TOXENV-python}
