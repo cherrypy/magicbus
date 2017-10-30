@@ -9,11 +9,11 @@ matrix:
 jobs:
   fast_finish: true
   include:
-  - python: 2.7
+  - python: &latest_stable 2.7
   - python: &latest_py3 3.6
   - stage: deploy
     if: tag IS present
-    python: *latest_py3
+    python: *latest_stable
     install: skip
     script: skip
     deploy:
