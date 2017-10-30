@@ -250,6 +250,7 @@ class BusMethodTests(unittest.TestCase):
             ]
         )
 
+    @unittest.skip("Fails intermittently; https://tinyurl.com/ybwwu4gz")
     def test_start_with_callback(self):
         b = ProcessBus()
         self.log(b)
