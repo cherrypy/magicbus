@@ -44,7 +44,7 @@ class PerpetualTimer(TimerClass):
             try:
                 self.function(*self.args, **self.kwargs)
             except Exception:
-                self.bus.log("Error in perpetual timer thread function %r." %
+                self.bus.log('Error in perpetual timer thread function %r.' %
                              self.function, level=40, traceback=True)
                 # Quit on first error to avoid massive logs.
                 raise
@@ -90,7 +90,7 @@ class BackgroundTask(threading.Thread):
                 self.function(*self.args, **self.kwargs)
             except Exception:
                 if self.bus:
-                    self.bus.log("Error in background task thread function %r."
+                    self.bus.log('Error in background task thread function %r.'
                                  % self.function, level=40, traceback=True)
                 # Quit on first error to avoid massive logs.
                 raise
@@ -128,24 +128,24 @@ class Monitor(SimplePlugin):
                                              bus=self.bus)
                 self.thread.setName(threadname)
                 self.thread.start()
-                self.bus.log("Started monitor thread %r." % threadname)
+                self.bus.log('Started monitor thread %r.' % threadname)
             else:
-                self.bus.log("Monitor thread %r already started." % threadname)
+                self.bus.log('Monitor thread %r already started.' % threadname)
     START.priority = 70
 
     def STOP(self):
         """Stop our callback's background task thread."""
         if self.thread is None:
-            self.bus.log("No thread running for %s." %
+            self.bus.log('No thread running for %s.' %
                          self.name or self.__class__.__name__)
         else:
             if self.thread is not threading.currentThread():
                 name = self.thread.getName()
                 self.thread.cancel()
                 if not self.thread.daemon:
-                    self.bus.log("Joining %r" % name)
+                    self.bus.log('Joining %r' % name)
                     self.thread.join()
-                self.bus.log("Stopped thread %r." % name)
+                self.bus.log('Stopped thread %r.' % name)
             self.thread = None
 
 
@@ -236,10 +236,10 @@ class Autoreloader(Monitor):
                 else:
                     if mtime is None or mtime > oldtime:
                         # The file has been deleted or modified.
-                        self.bus.log("Restarting because %s changed." %
+                        self.bus.log('Restarting because %s changed.' %
                                      filename)
                         self.thread.cancel()
-                        self.bus.log("Stopped thread %r." %
+                        self.bus.log('Stopped thread %r.' %
                                      self.thread.getName())
                         self.bus.restart()
                         return

@@ -63,35 +63,35 @@ class ProcessBus(base.Bus):
             # 2) transition() will *not* take error transitions.
             # However, we *do* include transitions *away from* error states.
             transitions={
-                "INITIAL": "ENTER",
-                "ENTER": "IDLE",
-                "START": ("RUN", "STOP"),
-                "RUN": "STOP",
-                "START_ERROR": "STOP",
-                "STOP": "IDLE",
-                "IDLE": ("START", "EXIT"),
-                "STOP_ERROR": "EXIT",
-                "EXIT": "EXITED",
-                "EXIT_ERROR": "EXITED",
+                'INITIAL': 'ENTER',
+                'ENTER': 'IDLE',
+                'START': ('RUN', 'STOP'),
+                'RUN': 'STOP',
+                'START_ERROR': 'STOP',
+                'STOP': 'IDLE',
+                'IDLE': ('START', 'EXIT'),
+                'STOP_ERROR': 'EXIT',
+                'EXIT': 'EXITED',
+                'EXIT_ERROR': 'EXITED',
             },
             # A dict whose keys are states. Exceptions raised during
             # the execution of those states move the machine to the
             # state named by the corresponding value.
             errors={
-                "ENTER": "STOP_ERROR",
-                "START": "START_ERROR",
-                "RUN": "START_ERROR",
-                "STOP": "STOP_ERROR",
-                "IDLE": "STOP_ERROR",
-                "EXIT": "EXIT_ERROR"
+                'ENTER': 'STOP_ERROR',
+                'START': 'START_ERROR',
+                'RUN': 'START_ERROR',
+                'STOP': 'STOP_ERROR',
+                'IDLE': 'STOP_ERROR',
+                'EXIT': 'EXIT_ERROR'
             },
-            initial_state="INITIAL",
+            initial_state='INITIAL',
             extra_channels=('log', 'main', 'execv')
         )
 
-        self.subscribe("START_ERROR", self.START_ERROR)
-        self.subscribe("STOP_ERROR", self.STOP_ERROR)
-        self.subscribe("EXIT_ERROR", self.EXIT_ERROR)
+        self.subscribe('START_ERROR', self.START_ERROR)
+        self.subscribe('STOP_ERROR', self.STOP_ERROR)
+        self.subscribe('EXIT_ERROR', self.EXIT_ERROR)
 
         self.thread_wait = lifecycle.ThreadWait(self)
         self.thread_wait.subscribe()
@@ -99,14 +99,14 @@ class ProcessBus(base.Bus):
         self.clean_exit.subscribe()
 
     def START_ERROR(self, *exc_info):
-        self.log("Exiting due to error in start listener:",
+        self.log('Exiting due to error in start listener:',
                  level=40, traceback=exc_info)
-        self.transition("EXITED")
+        self.transition('EXITED')
 
     def STOP_ERROR(self, *exc_info):
-        self.log("Exiting due to error in stop listener:",
+        self.log('Exiting due to error in stop listener:',
                  level=40, traceback=exc_info)
-        self.transition("EXITED")
+        self.transition('EXITED')
 
     def EXIT_ERROR(self, *exc_info):
         # This method is often called asynchronously (whether thread,
@@ -125,12 +125,12 @@ class ProcessBus(base.Bus):
         """
         from magicbus.plugins.lifecycle import Execv
         Execv(self).subscribe()
-        self.transition("EXITED")
+        self.transition('EXITED')
 
     def graceful(self):
         """Move to the IDLE state, then back to RUN."""
-        self.transition("IDLE")
-        self.transition("RUN")
+        self.transition('IDLE')
+        self.transition('RUN')
 
     def block(self, interval=0.1):
         """Wait for the EXITED state, KeyboardInterrupt or SystemExit.
@@ -142,15 +142,15 @@ class ProcessBus(base.Bus):
         the actual execv call (required on some platforms).
         """
         try:
-            self.wait("EXITED", interval=interval, channel='main')
+            self.wait('EXITED', interval=interval, channel='main')
         except (KeyboardInterrupt, IOError):
             # The time.sleep call might raise
             # "IOError: [Errno 4] Interrupted function call" on KBInt.
             self.log('Keyboard Interrupt: shutting down bus')
-            self.transition("EXITED")
+            self.transition('EXITED')
         except SystemExit:
             self.log('SystemExit raised: shutting down bus')
-            self.transition("EXITED")
+            self.transition('EXITED')
             raise
 
         self.publish('execv')
@@ -164,12 +164,12 @@ class ProcessBus(base.Bus):
         args = (func,) + args
 
         def _callback(func_, *a, **kw):
-            self.wait("RUN")
+            self.wait('RUN')
             func_(*a, **kw)
         t = threading.Thread(target=_callback, args=args, kwargs=kwargs)
         t.setName('Bus Callback ' + t.getName())
         t.start()
 
-        self.transition("RUN")
+        self.transition('RUN')
 
         return t

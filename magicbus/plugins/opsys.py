@@ -38,7 +38,7 @@ class DropPrivileges(SimplePlugin):
     def uid(self, val):
         if val is not None:
             if pwd is None:
-                self.bus.log("pwd module not available; ignoring uid.",
+                self.bus.log('pwd module not available; ignoring uid.',
                              level=30)
                 val = None
             elif isinstance(val, basestring):
@@ -54,7 +54,7 @@ class DropPrivileges(SimplePlugin):
     def gid(self, val):
         if val is not None:
             if grp is None:
-                self.bus.log("grp module not available; ignoring gid.",
+                self.bus.log('grp module not available; ignoring gid.',
                              level=30)
                 val = None
             elif isinstance(val, basestring):
@@ -76,7 +76,7 @@ class DropPrivileges(SimplePlugin):
             try:
                 os.umask
             except AttributeError:
-                self.bus.log("umask function not available; ignoring umask.",
+                self.bus.log('umask function not available; ignoring umask.',
                              level=30)
                 val = None
         self._umask = val
@@ -188,7 +188,7 @@ class Daemonizer(SimplePlugin):
         except OSError:
             # Python raises OSError rather than returning negative numbers.
             exc = sys.exc_info()[1]
-            sys.exit("%s: fork #1 failed: (%d) %s\n"
+            sys.exit('%s: fork #1 failed: (%d) %s\n'
                      % (sys.argv[0], exc.errno, exc.strerror))
 
         os.setsid()
@@ -201,15 +201,15 @@ class Daemonizer(SimplePlugin):
                 os._exit(0)  # Exit second parent
         except OSError:
             exc = sys.exc_info()[1]
-            sys.exit("%s: fork #2 failed: (%d) %s\n"
+            sys.exit('%s: fork #2 failed: (%d) %s\n'
                      % (sys.argv[0], exc.errno, exc.strerror))
 
-        os.chdir("/")
+        os.chdir('/')
         os.umask(0)
 
-        si = open(self.stdin, "r")
-        so = open(self.stdout, "a+")
-        se = open(self.stderr, "a+")
+        si = open(self.stdin, 'r')
+        so = open(self.stdout, 'a+')
+        se = open(self.stderr, 'a+')
 
         # os.dup2(fd, fd2) will close fd2 if necessary,
         # so we don't explicitly close stdin/out/err.
@@ -236,7 +236,7 @@ class PIDFile(SimplePlugin):
         if self.finalized:
             self.bus.log('PID %r already written to %r.' % (pid, self.pidfile))
         else:
-            open(self.pidfile, "wb").write(ntob("%s" % pid, 'utf8'))
+            open(self.pidfile, 'wb').write(ntob('%s' % pid, 'utf8'))
             self.bus.log('PID %r written to %r.' % (pid, self.pidfile))
             self.finalized = True
     ENTER.priority = 70

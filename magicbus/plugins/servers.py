@@ -135,35 +135,35 @@ class ServerPlugin(object):
     @property
     def interface(self):
         if self.bind_addr is None:
-            return "unknown interface (dynamic?)"
+            return 'unknown interface (dynamic?)'
         elif isinstance(self.bind_addr, tuple):
             host, port = self.bind_addr
-            return "%s:%s" % (host, port)
+            return '%s:%s' % (host, port)
         else:
-            return "socket file: %s" % self.bind_addr
+            return 'socket file: %s' % self.bind_addr
 
     def START(self):
         """Start the HTTP server."""
         if self.running:
-            self.bus.log("Already serving on %s" % self.interface)
+            self.bus.log('Already serving on %s' % self.interface)
             return
 
         self.interrupt = None
         if not self.httpserver:
-            raise ValueError("No HTTP server has been created.")
+            raise ValueError('No HTTP server has been created.')
 
         # Start the httpserver in a new thread.
         if isinstance(self.bind_addr, tuple):
             wait_for_free_port(*self.bind_addr)
 
         t = threading.Thread(target=self._start_http_thread)
-        t.setName("HTTPServer " + t.getName())
-        self.bus.log("Starting on %s" % self.interface)
+        t.setName('HTTPServer ' + t.getName())
+        self.bus.log('Starting on %s' % self.interface)
         t.start()
 
         self.wait()
         self.running = True
-        self.bus.log("Serving on %s" % self.interface)
+        self.bus.log('Serving on %s' % self.interface)
     START.priority = 75
 
     def _start_http_thread(self):
@@ -176,24 +176,24 @@ class ServerPlugin(object):
         try:
             self.httpserver.start()
         except KeyboardInterrupt:
-            self.bus.log("<Ctrl-C> hit: shutting down HTTP server")
+            self.bus.log('<Ctrl-C> hit: shutting down HTTP server')
             self.interrupt = sys.exc_info()[1]
-            self.bus.transition("EXITED")
+            self.bus.transition('EXITED')
         except SystemExit:
-            self.bus.log("SystemExit raised: shutting down HTTP server")
+            self.bus.log('SystemExit raised: shutting down HTTP server')
             self.interrupt = sys.exc_info()[1]
-            self.bus.transition("EXITED")
+            self.bus.transition('EXITED')
             raise
         except:
             self.interrupt = sys.exc_info()[1]
-            self.bus.log("Error in HTTP server: shutting down",
+            self.bus.log('Error in HTTP server: shutting down',
                          traceback=True, level=40)
-            self.bus.transition("EXITED")
+            self.bus.transition('EXITED')
             raise
 
     def wait(self):
         """Wait until the HTTP server is ready to receive requests."""
-        while not getattr(self.httpserver, "ready", False):
+        while not getattr(self.httpserver, 'ready', False):
             if self.interrupt:
                 raise self.interrupt
             time.sleep(.1)
@@ -201,7 +201,7 @@ class ServerPlugin(object):
         # Wait for port to be occupied
         if isinstance(self.bind_addr, tuple):
             host, port = self.bind_addr
-            self.bus.log("Waiting for %s" % self.interface)
+            self.bus.log('Waiting for %s' % self.interface)
             wait_for_occupied_port(host, port)
 
     def STOP(self):
@@ -213,9 +213,9 @@ class ServerPlugin(object):
             if isinstance(self.bind_addr, tuple):
                 wait_for_free_port(*self.bind_addr)
             self.running = False
-            self.bus.log("HTTP Server %s shut down" % self.httpserver)
+            self.bus.log('HTTP Server %s shut down' % self.httpserver)
         else:
-            self.bus.log("HTTP Server %s already shut down" % self.httpserver)
+            self.bus.log('HTTP Server %s already shut down' % self.httpserver)
     STOP.priority = 25
 
 
@@ -356,10 +356,10 @@ def check_port(host, port, timeout=1.0):
     except socket.gaierror:
         if ':' in host:
             info = [
-                (socket.AF_INET6, socket.SOCK_STREAM, 0, "",
+                (socket.AF_INET6, socket.SOCK_STREAM, 0, '',
                  (host, port, 0, 0))]
         else:
-            info = [(socket.AF_INET, socket.SOCK_STREAM, 0, "", (host, port))]
+            info = [(socket.AF_INET, socket.SOCK_STREAM, 0, '', (host, port))]
 
     for res in info:
         af, socktype, proto, canonname, sa = res
@@ -376,8 +376,8 @@ def check_port(host, port, timeout=1.0):
                 s.close()
         else:
             raise OSError(
-                "Port %s is in use on %s; perhaps the previous "
-                "httpserver did not shut down properly." %
+                'Port %s is in use on %s; perhaps the previous '
+                'httpserver did not shut down properly.' %
                 (repr(port), repr(host))
             )
 
@@ -404,7 +404,7 @@ def wait_for_free_port(host, port, timeout=None):
         else:
             return
 
-    raise OSError("Port %r not free on %r" % (port, host))
+    raise OSError('Port %r not free on %r' % (port, host))
 
 
 def wait_for_occupied_port(host, port, timeout=None):
@@ -423,11 +423,11 @@ def wait_for_occupied_port(host, port, timeout=None):
             time.sleep(timeout)
 
     if host == client_host(host):
-        raise OSError("Port %r not bound on %r" % (port, host))
+        raise OSError('Port %r not bound on %r' % (port, host))
 
     # On systems where a loopback interface is not available and the
     #  server is bound to all interfaces, it's difficult to determine
     #  whether the server is in fact occupying the port. In this case,
     # just issue a warning and move on. See issue #1100.
-    msg = "Unable to verify that the server is bound on %r" % port
+    msg = 'Unable to verify that the server is bound on %r' % port
     warnings.warn(msg)

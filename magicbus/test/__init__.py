@@ -14,12 +14,12 @@ from magicbus.plugins import SimplePlugin
 
 def assertEqual(x, y, msg=None):
     if not x == y:
-        raise AssertionError(msg or "%r != %r" % (x, y))
+        raise AssertionError(msg or '%r != %r' % (x, y))
 
 
 def assertNotEqual(x, y, msg=None):
     if x == y:
-        raise AssertionError(msg or "%r == %r" % (x, y))
+        raise AssertionError(msg or '%r == %r' % (x, y))
 
 
 class Process(object):
@@ -78,7 +78,7 @@ class WebService(object):
     def do_GET(self, uri):
         conn = HTTPConnection(*self.address)
         try:
-            conn.request("GET", uri)
+            conn.request('GET', uri)
             return conn.getresponse()
         finally:
             conn.close()
@@ -102,13 +102,13 @@ class WebAdapter(SimplePlugin):
 
     def wait(self):
         """Wait until the HTTP server is ready to receive requests."""
-        while not getattr(self.service, "ready", False):
+        while not getattr(self.service, 'ready', False):
             time.sleep(.1)
 
 
 class WebHandler(HTTPHandler):
 
-    def log_request(self, code="-", size="-"):
+    def log_request(self, code='-', size='-'):
         HTTPHandler.log_request(self, code, size)
 
     def respond(self, body=None, status=200, headers=None):

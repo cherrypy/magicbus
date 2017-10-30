@@ -18,4 +18,4 @@ except ImportError:
     from magicbus.process import ProcessBus
 bus = ProcessBus()
 
-__all__ = ["ChannelFailures", "Bus", "ProcessBus", "bus"]
+__all__ = ['ChannelFailures', 'Bus', 'ProcessBus', 'bus']

@@ -54,7 +54,7 @@ class State(object):
         self.name = name
 
     def __repr__(self):
-        return "State(%s)" % repr(self.name)
+        return 'State(%s)' % repr(self.name)
 
 
 class StateEnum(object):
@@ -205,7 +205,7 @@ class Bus(object):
         try:
             self.state = newstate
             if self._state_transition_pipe_write is not None:
-                os.write(self._state_transition_pipe_write, "1")
+                os.write(self._state_transition_pipe_write, '1')
 
             # Note: logging here means 1) the initial transition
             # will not be logged if loggers are set up in the initial
@@ -288,7 +288,7 @@ class Bus(object):
                     # Assume any further messages to 'log' will fail.
                     pass
                 else:
-                    self.log("Error in %r listener %r" % (channel, listener),
+                    self.log('Error in %r listener %r' % (channel, listener),
                              level=40, traceback=True)
         if exc:
             raise exc
@@ -330,12 +330,12 @@ class Bus(object):
 
         _wait()
 
-    def log(self, msg="", level=20, traceback=False):
+    def log(self, msg='', level=20, traceback=False):
         """Log the given message. Append the last traceback if requested."""
         if traceback:
             if traceback is True:
                 exc_info = sys.exc_info()
             else:
                 exc_info = traceback
-            msg += "\n" + "".join(_traceback.format_exception(*exc_info))
+            msg += '\n' + ''.join(_traceback.format_exception(*exc_info))
         self.publish('log', msg, level)

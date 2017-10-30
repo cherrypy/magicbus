@@ -10,9 +10,9 @@ class Handler(WebHandler):
 
     def do_GET(self):
         if self.path == '/':
-            self.respond("Hello World")
+            self.respond('Hello World')
         elif self.path == '/ctrlc':
-            self.respond("okey-doke")
+            self.respond('okey-doke')
             raise KeyboardInterrupt
         else:
             self.respond(status=404)
@@ -30,8 +30,8 @@ class TestServers(object):
         adapter.subscribe()
 
         # Raise a keyboard interrupt in the HTTP server's main thread.
-        bus.transition("RUN")
-        resp = service.do_GET("/ctrlc")
+        bus.transition('RUN')
+        resp = service.do_GET('/ctrlc')
         assertEqual(resp.status, 200)
         bus.block()
-        assertEqual(bus.state, "EXITED")
+        assertEqual(bus.state, 'EXITED')
