@@ -16,6 +16,7 @@ import sys
 if sys.version_info >= (3, 0):
     py3k = True
     basestring = (bytes, str)
+    unicodestr = str
 
     def ntob(n, encoding='ISO-8859-1'):
         """Return the given native string as a byte string in the given
@@ -26,6 +27,7 @@ else:
     # Python 2
     py3k = False
     basestring = basestring
+    unicodestr = unicode
 
     def ntob(n, encoding='ISO-8859-1'):
         """Return the given native string as a byte string in the given

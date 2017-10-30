@@ -81,7 +81,7 @@ class DropPrivileges(SimplePlugin):
                 val = None
         self._umask = val
 
-    def start(self):
+    def START(self):
         # uid/gid
         def current_ids():
             """Return the current (uid, gid) if available."""
@@ -122,10 +122,10 @@ class DropPrivileges(SimplePlugin):
                              (old_umask, self.umask))
 
         self.finalized = True
-    # This is slightly higher than the priority for server.start
+    # This is slightly higher than the priority for server.START
     # in order to facilitate the most common use: starting on a low
     # port (which requires root) and then dropping to another user.
-    start.priority = 77
+    START.priority = 77
 
 
 class Daemonizer(SimplePlugin):
@@ -153,9 +153,9 @@ class Daemonizer(SimplePlugin):
         self.stderr = stderr
         self.finalized = False
 
-    def start(self):
+    def ENTER(self):
         if self.finalized:
-            self.bus.log('Already deamonized.')
+            self.bus.log('Already daemonized.')
 
         # forking has issues with threads:
         # http://www.opengroup.org/onlinepubs/000095399/functions/fork.html
@@ -220,7 +220,7 @@ class Daemonizer(SimplePlugin):
 
         self.bus.log('Daemonized to PID: %s' % os.getpid())
         self.finalized = True
-    start.priority = 65
+    ENTER.priority = 65
 
 
 class PIDFile(SimplePlugin):
@@ -231,7 +231,7 @@ class PIDFile(SimplePlugin):
         self.pidfile = pidfile
         self.finalized = False
 
-    def start(self):
+    def ENTER(self):
         pid = os.getpid()
         if self.finalized:
             self.bus.log('PID %r already written to %r.' % (pid, self.pidfile))
@@ -239,9 +239,9 @@ class PIDFile(SimplePlugin):
             open(self.pidfile, "wb").write(ntob("%s" % pid, 'utf8'))
             self.bus.log('PID %r written to %r.' % (pid, self.pidfile))
             self.finalized = True
-    start.priority = 70
+    ENTER.priority = 70
 
-    def exit(self):
+    def EXIT(self):
         try:
             os.remove(self.pidfile)
             self.bus.log('PID file removed: %r.' % self.pidfile)
