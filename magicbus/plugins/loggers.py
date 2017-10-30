@@ -1,56 +1,60 @@
 """Logging plugins for magicbus."""
-from magicbus.compat import ntob
+from magicbus.compat import ntob, unicodestr
 import datetime
 import sys
 
 from magicbus.plugins import SimplePlugin
 
 
-class StdoutLogger(SimplePlugin):
+class StreamLogger(SimplePlugin):
 
-    def __init__(self, bus, level=None):
+    default_format = "[%(timestamp)s] (Bus %(bus)s) %(message)s\n"
+
+    def __init__(self, bus, stream, level=None, format=None, encoding='utf-8'):
         SimplePlugin.__init__(self, bus)
+        self.stream = stream
         self.level = level
+        self.format = format or self.default_format
+        self.encoding = encoding
 
     def log(self, msg, level):
         if self.level is None or self.level <= level:
-            sys.stdout.write(msg + '\n')
-            sys.stdout.flush()
+            params = {
+                "timestamp": ntob(datetime.datetime.now().isoformat()),
+                "bus": self.bus.id,
+                "message": msg,
+                "level": level
+            }
+            complete_msg = self.format % params
+
+            if self.encoding is not None:
+                if isinstance(complete_msg, unicodestr):
+                    complete_msg = complete_msg.encode(self.encoding)
+
+            self.stream.write(complete_msg)
+            self.stream.flush()
 
 
-class FileLogger(SimplePlugin):
+class StdoutLogger(StreamLogger):
 
-    def __init__(self, bus, filename=None, file=None, encoding='utf8',
-                 level=None):
-        SimplePlugin.__init__(self, bus)
+    def __init__(self, bus, level=None, format=None, encoding='utf-8'):
+        StreamLogger.__init__(self, bus, sys.stdout, level, format, encoding)
+
+
+class StderrLogger(StreamLogger):
+
+    def __init__(self, bus, level=None, format=None, encoding='utf-8'):
+        StreamLogger.__init__(self, bus, sys.stderr, level, format, encoding)
+
+
+class FileLogger(StreamLogger):
+
+    def __init__(self, bus, filename=None, file=None,
+                 level=None, format=None, encoding='utf8'):
         self.filename = filename
-        self.file = file
-        self.encoding = encoding
-        self.level = level
+        if file is None:
+            if filename is None:
+                raise ValueError("Either file or filename MUST be supplied.")
+            file = open(filename, 'ab')
 
-    def start(self):
-        if self.filename is not None:
-            self.file = open(self.filename, 'wb')
-    start.priority = 0
-
-    def log(self, msg, level):
-        if (
-            (self.level is None or self.level <= level) and
-            self.file is not None
-        ):
-            if isinstance(msg, str):
-                msg = msg.encode(self.encoding)
-            self.file.write(
-                b'[' +
-                ntob(datetime.datetime.now().isoformat()) +
-                b'] ' +
-                msg +
-                b'\n'
-            )
-            self.file.flush()
-
-    def stop(self):
-        if self.filename is not None:
-            self.file.close()
-            self.file = None
-    stop.priority = 100
+        StreamLogger.__init__(self, bus, file, level, format, encoding)

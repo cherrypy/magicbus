@@ -90,15 +90,15 @@ class WebAdapter(SimplePlugin):
         self.bus = bus
         self.service = service
 
-    def start(self):
+    def START(self):
         threading.Thread(target=self.service.start).start()
         self.wait()
-    # Make sure we start httpd after the daemonizer.
-    start.priority = 75
+    # Make sure we start httpd after the daemonizer and pidfile.
+    START.priority = 75
 
-    def stop(self):
+    def STOP(self):
         self.service.stop()
-    stop.priority = 25
+    STOP.priority = 25
 
     def wait(self):
         """Wait until the HTTP server is ready to receive requests."""
@@ -109,8 +109,7 @@ class WebAdapter(SimplePlugin):
 class WebHandler(HTTPHandler):
 
     def log_request(self, code="-", size="-"):
-        if self.bus.debug:
-            HTTPHandler.log_request(self, code, size)
+        HTTPHandler.log_request(self, code, size)
 
     def respond(self, body=None, status=200, headers=None):
         if headers is None:

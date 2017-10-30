@@ -1,28 +1,22 @@
-from magicbus import bus
 from magicbus.plugins import tasks
 from magicbus.test import assertEqual, WebAdapter, WebService, WebHandler
 
-
-class Handler(WebHandler):
-
-    bus = bus
-
-    def do_GET(self):
-        if self.path == '/':
-            self.respond("Hello World")
-        elif self.path == '/graceful':
-            self.bus.graceful()
-            self.respond("app was (gracefully) restarted succesfully")
-        elif self.path == '/ctrlc':
-            raise KeyboardInterrupt
-        else:
-            self.respond(status=404)
+from magicbus.process import ProcessBus
 
 
 class TestTasks(object):
 
     def test_thread_manager(self):
-        bus.clear()
+        bus = ProcessBus()
+
+        class Handler(WebHandler):
+
+            def do_GET(self):
+                if self.path == '/':
+                    self.respond("Hello World")
+                else:
+                    self.respond(status=404)
+        Handler.bus = bus
 
         service = WebService(address=('127.0.0.1', 38001),
                              handler_class=Handler)
@@ -33,9 +27,9 @@ class TestTasks(object):
         assertEqual(len(tm.threads), 0)
 
         # Test server start
-        bus.start()
+        bus.transition("RUN")
         try:
-            assertEqual(bus.state, bus.states.STARTED)
+            assertEqual(bus.state, "RUN")
             assertEqual(service.ready, True)
             assertEqual(len(tm.threads), 0)
 
@@ -43,10 +37,10 @@ class TestTasks(object):
             assertEqual(len(tm.threads), 1)
 
             # Test bus stop. This will also stop the WebService.
-            bus.stop()
-            assertEqual(bus.state, bus.states.STOPPED)
+            bus.transition("IDLE")
+            assertEqual(bus.state, "IDLE")
 
             # Verify that our custom stop function was called
             assertEqual(len(tm.threads), 0)
         finally:
-            bus.exit()
+            bus.transition("EXITED")
