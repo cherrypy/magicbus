@@ -3,8 +3,8 @@
 
 .. image:: https://img.shields.io/pypi/pyversions/magicbus.svg
 
-.. image:: https://img.shields.io/travis/jaraco/magicbus/master.svg
-   :target: http://travis-ci.org/jaraco/magicbus
+.. image:: https://img.shields.io/travis/cherrypy/magicbus/master.svg
+   :target: http://travis-ci.org/cherrypy/magicbus
 
 The Process Bus is a publish/subscribe architecture that
 loosely connects components with services.
