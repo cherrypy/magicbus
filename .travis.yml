@@ -1,147 +1,15 @@
-os: linux
 dist: trusty
-
 sudo: false
-group: edge
-
-_base_envs:
-- &stage_lint
-  stage: &stage_lint_name lint
-- &stage_test_priority
-  stage: &stage_test_priority_name test against latest Python versions first (under GNU/Linux)
-- &stage_test_osx
-  stage: &stage_test_osx_name test under OS X (last chance to fail before deploy available)
-- &stage_deploy
-  stage: &stage_deploy_name upload new version of python package to PYPI (only for tagged commits)
-- &pyenv_base
-  language: generic
-  python: &pypy2 pypy2.7-5.8.0
-  env:
-  - &env_pypy2 PYTHON_VERSION=pypy2.7-5.8.0
-  - &env_pyenv PYENV_ROOT="$HOME/.pyenv"
-  - &env_path PATH="$PYENV_ROOT/bin:$PATH"
-  before_install:
-  - &ensure_pyenv_installed |
-    if [ ! -f "$PYENV_ROOT/bin/pyenv" ]
-    then
-      rm -rf "$PYENV_ROOT"
-      curl -L https://raw.githubusercontent.com/pyenv/pyenv-installer/master/bin/pyenv-installer | bash
-      eval "$(pyenv init -)"
-      eval "$(pyenv virtualenv-init -)"
-    fi
-    eval "$(pyenv init -)"
-    eval "$(pyenv virtualenv-init -)"
-    pyenv update
-  - &install_python pyenv install --skip-existing --keep --verbose "$PYTHON_VERSION"
-  - &switch_python pyenv shell "$PYTHON_VERSION"
-  - &python_version python --version
-- &osx_python_base
-  <<: *pyenv_base
-  <<: *stage_test_osx
-  os: osx
-  language: generic
-  before_install:
-  - brew update
-  - brew install readline xz
-  - *ensure_pyenv_installed
-  - *install_python
-  - *switch_python
-  - *python_version
-  before_cache:
-  - brew --cache
-- &pure_python_base_priority
-  <<: *stage_test_priority
-  python: &mainstream_python 3.6
-- &lint_python_base
-  <<: *stage_lint
-  python: *mainstream_python
-  after_failure: []
-
-stages:
-- *stage_lint_name
-- *stage_test_priority_name
-- test
-- *stage_test_osx_name
-- name: *stage_deploy_name
-  if: tag IS present
-
-# Base test matrix run in linux containers:
-python:
-- 2.7
-- 3.3
-- 3.4
-- 3.5
-- *mainstream_python
-- *pypy2
-- &pypy3 pypy3.5-5.8.0
+language: python
 
 jobs:
   fast_finish: true
-  allow_failures:
-  - env: &pep257_env TOXENV=pre-commit-pep257
-  - env: &pre-commit_env TOXENV=pre-commit
-  # pypy2.7 succeeds locally
-  - python: *pypy2
-    os: linux
-  # pypy3.5 fails locally like in Travis
-  - python: *pypy3
-    os: linux
-  # OS X environment is extremely unstable
-  - os: linux
   include:
-  - <<: *lint_python_base
-    env: *pre-commit_env
-  - <<: *lint_python_base
-    env: *pep257_env
-  - <<: *pure_python_base_priority
-    # mainstream here (3.6)
-  - <<: *pure_python_base_priority
-    python: nightly
-  - <<: *osx_python_base
-    python: 2.7
-    env:
-    - PYTHON_VERSION=2.7.13
-    - *env_pyenv
-    - *env_path
-  - <<: *osx_python_base
-    python: 3.3
-    env:
-    - PYTHON_VERSION=3.3.6
-    - *env_pyenv
-    - *env_path
-  - <<: *osx_python_base
-    python: 3.4
-    env:
-    - PYTHON_VERSION=3.4.6
-    - *env_pyenv
-    - *env_path
-  - <<: *osx_python_base
-    python: 3.5
-    env:
-    - PYTHON_VERSION=3.5.3
-    - *env_pyenv
-    - *env_path
-  - <<: *osx_python_base
-    python: *mainstream_python
-    env:
-    - PYTHON_VERSION=3.6.1
-    - *env_pyenv
-    - *env_path
-  - <<: *osx_python_base
-    python: nightly
-    env:
-    - PYTHON_VERSION=3.7-dev
-    - *env_pyenv
-    - *env_path
-  - <<: *osx_python_base
-    python: *pypy2
-    env:
-    - *env_pypy2
-    - *env_pyenv
-    - *env_path
-  # pypy3.5-5.8.0 fails under OS X because it's unsupported (PR #26)
-  - <<: *stage_deploy
-    python: *mainstream_python
+  - python: 2.7
+  - python: &latest_py3 3.6
+  - stage: deploy
+    if: tag IS present
+    python: *latest_py3
     install: skip
     script: skip
     deploy:
@@ -150,25 +18,15 @@ jobs:
         tags: true
         all_branches: true
       user: jaraco
-      distributions: dists
       password:
         secure: rGooTu2PXDe+83QGlXVyfrMFZkUJ78qNMj6TRpLDz1Mb+SEx9HazxxrcURtNBemHlx9bebUYV0Ue2xgkK4vUFw2vyD3WVaXBJTQQkkKsGlUZy27NgOqqNxR3igQqloM1oVg7+NZqRvuAhoTTkhA9btp7l6CZ4tp8JfljO9b9TAw=
+      distributions: dists
+      skip_cleanup: true
+      skip_upload_docs: true
 
-cache:
-  pip: true
-  directories:
-  - $HOME/.pre-commit
-  - $HOME/Library/Caches/Homebrew
+cache: pip
 
 install:
 - pip install tox
 
-script:
-- tox -e${TOXENV-python}
-
-after_failure:
-- echo "Here's a list of installed Python packages:"
-- pip list --format=columns
-- py_log=/home/travis/build/cherrypy/magicbus/.tox/python/log/python-0.log
-- echo Outputting python invocation log from $py_log
-- cat $py_log
+script: tox
