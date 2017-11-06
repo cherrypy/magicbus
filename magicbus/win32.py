@@ -27,7 +27,7 @@ class Win32Bus(base.Bus):
             return self.events[state]
         except KeyError:
             event = win32event.CreateEvent(None, 0, 0,
-                                           "Bus %s Event (pid=%r)" %
+                                           'Bus %s Event (pid=%r)' %
                                            (state.name, os.getpid()))
             self.events[state] = event
             return event
@@ -137,7 +137,7 @@ class _ControlCodes(dict):
         for key, val in self.items():
             if val is obj:
                 return key
-        raise ValueError("The given object could not be found: %r" % obj)
+        raise ValueError('The given object could not be found: %r' % obj)
 
 control_codes = _ControlCodes({'graceful': 138})
 
@@ -155,14 +155,14 @@ class PyWebService(win32serviceutil.ServiceFramework):
 
     """Python Web Service."""
 
-    _svc_name_ = "Python Web Service"
-    _svc_display_name_ = "Python Web Service"
+    _svc_name_ = 'Python Web Service'
+    _svc_display_name_ = 'Python Web Service'
     _svc_deps_ = None        # sequence of service names on which this depends
-    _exe_name_ = "pywebsvc"
+    _exe_name_ = 'pywebsvc'
     _exe_args_ = None        # Default to no arguments
 
     # Only exists on Windows 2000 or later, ignored on windows NT
-    _svc_description_ = "Python Web Service"
+    _svc_description_ = 'Python Web Service'
 
     def SvcDoRun(self):
         from magicbus import bus

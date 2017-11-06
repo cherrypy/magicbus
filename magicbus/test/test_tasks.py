@@ -13,7 +13,7 @@ class TestTasks(object):
 
             def do_GET(self):
                 if self.path == '/':
-                    self.respond("Hello World")
+                    self.respond('Hello World')
                 else:
                     self.respond(status=404)
         Handler.bus = bus
@@ -27,20 +27,20 @@ class TestTasks(object):
         assertEqual(len(tm.threads), 0)
 
         # Test server start
-        bus.transition("RUN")
+        bus.transition('RUN')
         try:
-            assertEqual(bus.state, "RUN")
+            assertEqual(bus.state, 'RUN')
             assertEqual(service.ready, True)
             assertEqual(len(tm.threads), 0)
 
-            assertEqual(service.do_GET("/").read(), b"Hello World")
+            assertEqual(service.do_GET('/').read(), b'Hello World')
             assertEqual(len(tm.threads), 1)
 
             # Test bus stop. This will also stop the WebService.
-            bus.transition("IDLE")
-            assertEqual(bus.state, "IDLE")
+            bus.transition('IDLE')
+            assertEqual(bus.state, 'IDLE')
 
             # Verify that our custom stop function was called
             assertEqual(len(tm.threads), 0)
         finally:
-            bus.transition("EXITED")
+            bus.transition('EXITED')

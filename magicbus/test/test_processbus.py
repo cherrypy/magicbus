@@ -6,7 +6,7 @@ from magicbus.base import Bus, ChannelFailures
 from magicbus.process import ProcessBus
 
 
-msg = "Listener %d on channel %s: %s."
+msg = 'Listener %d on channel %s: %s.'
 
 
 class PublishSubscribeTests(unittest.TestCase):
@@ -19,7 +19,7 @@ class PublishSubscribeTests(unittest.TestCase):
     def test_builtin_channels(self):
         b = ProcessBus()
         listeners = [l for l in b.listeners
-                     if l != 'log' and not l.endswith("_ERROR")]
+                     if l != 'log' and not l.endswith('_ERROR')]
 
         self.responses, expected = [], []
 
@@ -38,7 +38,7 @@ class PublishSubscribeTests(unittest.TestCase):
             self.assertEqual(self.responses, expected)
         finally:
             # Exit so the atexit handler doesn't complain.
-            b.transition("EXITED")
+            b.transition('EXITED')
 
     def test_custom_channels(self):
         b = Bus()
@@ -108,7 +108,7 @@ class BusMethodTests(unittest.TestCase):
         for index in range(num):
             b.subscribe('START', self.get_listener('START', index))
 
-        b.transition("RUN")
+        b.transition('RUN')
         try:
             # The start method MUST call all 'start' listeners.
             self.assertEqual(
@@ -117,7 +117,7 @@ class BusMethodTests(unittest.TestCase):
             )
             # The transition method MUST move the state to RUN
             # (or START_ERROR, if errors occur)
-            self.assertEqual(b.state, "RUN")
+            self.assertEqual(b.state, 'RUN')
 
             # The start method MUST log its states.
             self.assertLog([
@@ -128,11 +128,11 @@ class BusMethodTests(unittest.TestCase):
             ])
         finally:
             # Exit so the atexit handler doesn't complain.
-            b.transition("EXITED")
+            b.transition('EXITED')
 
     def test_run_to_idle(self):
         b = ProcessBus()
-        b.transition("RUN")
+        b.transition('RUN')
         self.log(b, level=20)
 
         try:
@@ -141,7 +141,7 @@ class BusMethodTests(unittest.TestCase):
             for index in range(num):
                 b.subscribe('STOP', self.get_listener('STOP', index))
 
-            b.transition("IDLE")
+            b.transition('IDLE')
 
             # The idle transition MUST call all 'stop' listeners.
             self.assertEqual(
@@ -149,7 +149,7 @@ class BusMethodTests(unittest.TestCase):
                 set(msg % (i, 'STOP', None) for i in range(num))
             )
             # The idle method MUST move the state to IDLE
-            self.assertEqual(b.state, "IDLE")
+            self.assertEqual(b.state, 'IDLE')
             # The idle method MUST log its states.
             self.assertLog([
                 'Bus state: STOP',
@@ -157,7 +157,7 @@ class BusMethodTests(unittest.TestCase):
             ])
         finally:
             # Exit so the atexit handler doesn't complain.
-            b.transition("EXITED")
+            b.transition('EXITED')
 
     def test_idle_to_exit(self):
         b = ProcessBus()
@@ -169,7 +169,7 @@ class BusMethodTests(unittest.TestCase):
             b.subscribe('EXIT', self.get_listener('EXIT', index))
             b.subscribe('EXITED', self.get_listener('EXITED', index))
 
-        b.transition("EXITED")
+        b.transition('EXITED')
 
         # The bus MUST call all 'EXIT' listeners,
         # and then all 'EXITED' listeners.
@@ -179,7 +179,7 @@ class BusMethodTests(unittest.TestCase):
                 [msg % (i, 'EXITED', None) for i in range(num)])
         )
         # The bus MUST move the state to EXITED
-        self.assertEqual(b.state, "EXITED")
+        self.assertEqual(b.state, 'EXITED')
 
         # The bus MUST log its states.
         self.assertLog([
@@ -199,17 +199,17 @@ class BusMethodTests(unittest.TestCase):
             b.transition(desired_state)
 
         for desired_state_, states_to_wait_for in [
-            ('RUN', ["RUN"]),
-            ('IDLE', ["IDLE"]),
-            ('RUN', ["START", "RUN"]),
-            ('EXITED', ["EXITED"])
+            ('RUN', ['RUN']),
+            ('IDLE', ['IDLE']),
+            ('RUN', ['START', 'RUN']),
+            ('EXITED', ['EXITED'])
         ]:
             threading.Thread(target=f, args=(desired_state_,)).start()
             b.wait(states_to_wait_for)
 
             # The wait method MUST wait for the given state(s).
             if b.state not in states_to_wait_for:
-                self.fail("State %r not in %r" % (b.state, states_to_wait_for))
+                self.fail('State %r not in %r' % (b.state, states_to_wait_for))
 
     def test_block(self):
         b = ProcessBus()
@@ -217,7 +217,7 @@ class BusMethodTests(unittest.TestCase):
 
         def f():
             time.sleep(0.2)
-            b.transition("EXITED")
+            b.transition('EXITED')
 
         def g():
             time.sleep(0.4)
@@ -237,7 +237,7 @@ class BusMethodTests(unittest.TestCase):
         f_thread.join()
 
         # The block method MUST wait for the EXITED state.
-        self.assertEqual(b.state, "EXITED")
+        self.assertEqual(b.state, 'EXITED')
         # The block method MUST wait for ALL non-main, non-daemon threads to
         # finish.
         threads = [t for t in threading.enumerate() if not t.daemon]
@@ -246,8 +246,8 @@ class BusMethodTests(unittest.TestCase):
         # it
         self.assertEqual(
             [entry for entry in self._log_entries
-             if not entry.startswith("Publishing")
-             and not entry.startswith("Waiting")],
+             if not entry.startswith('Publishing')
+             and not entry.startswith('Waiting')],
             [
                 'Bus state: ENTER',
                 'Bus state: IDLE',
@@ -260,6 +260,7 @@ class BusMethodTests(unittest.TestCase):
         # to the "main" channel.
         self.assertGreater(len(main_calls), 0)
 
+    @unittest.skip("Fails intermittently; https://tinyurl.com/ybwwu4gz")
     def test_start_with_callback(self):
         b = ProcessBus()
         self.log(b)
@@ -267,22 +268,22 @@ class BusMethodTests(unittest.TestCase):
             events = []
 
             def f(*args, **kwargs):
-                events.append(("f", args, kwargs))
+                events.append(('f', args, kwargs))
 
             def g():
-                events.append("g")
+                events.append('g')
 
-            b.subscribe("RUN", g)
-            b.start_with_callback(f, (1, 3, 5), {"foo": "bar"})
+            b.subscribe('RUN', g)
+            b.start_with_callback(f, (1, 3, 5), {'foo': 'bar'})
             # Give wait() time to run f()
             time.sleep(0.2)
 
             # The callback method MUST wait for the STARTED state.
-            self.assertEqual(b.state, "RUN")
+            self.assertEqual(b.state, 'RUN')
             # The callback method MUST run after all start methods.
-            self.assertEqual(events, ["g", ("f", (1, 3, 5), {"foo": "bar"})])
+            self.assertEqual(events, ['g', ('f', (1, 3, 5), {'foo': 'bar'})])
         finally:
-            b.transition("EXITED")
+            b.transition('EXITED')
 
     def test_log(self):
         b = Bus()
@@ -291,7 +292,7 @@ class BusMethodTests(unittest.TestCase):
 
         # Try a normal message.
         expected = []
-        for _msg in ["O mah darlin'"] * 3 + ["Clementiiiiiiiine"]:
+        for _msg in ["O mah darlin'"] * 3 + ['Clementiiiiiiiine']:
             b.log(_msg)
             expected.append(_msg)
             self.assertLog(expected)
@@ -300,14 +301,14 @@ class BusMethodTests(unittest.TestCase):
         try:
             foo
         except NameError:
-            b.log("You are lost and gone forever", traceback=True)
+            b.log('You are lost and gone forever', traceback=True)
             lastmsg = self._log_entries[-1]
-            if "Traceback" not in lastmsg or "NameError" not in lastmsg:
-                self.fail("Last log message %r did not contain "
-                          "the expected traceback." % lastmsg)
+            if 'Traceback' not in lastmsg or 'NameError' not in lastmsg:
+                self.fail('Last log message %r did not contain '
+                          'the expected traceback.' % lastmsg)
         else:
-            self.fail("NameError was not raised as expected.")
+            self.fail('NameError was not raised as expected.')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()

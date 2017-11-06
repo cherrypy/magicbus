@@ -8,7 +8,7 @@ from magicbus.plugins import SimplePlugin
 
 class StreamLogger(SimplePlugin):
 
-    default_format = "[%(timestamp)s] (Bus %(bus)s) %(message)s\n"
+    default_format = '[%(timestamp)s] (Bus %(bus)s) %(message)s\n'
 
     def __init__(self, bus, stream, level=None, format=None, encoding='utf-8'):
         SimplePlugin.__init__(self, bus)
@@ -20,10 +20,10 @@ class StreamLogger(SimplePlugin):
     def log(self, msg, level):
         if self.level is None or self.level <= level:
             params = {
-                "timestamp": ntob(datetime.datetime.now().isoformat()),
-                "bus": self.bus.id,
-                "message": msg,
-                "level": level
+                'timestamp': ntob(datetime.datetime.now().isoformat()),
+                'bus': self.bus.id,
+                'message': msg,
+                'level': level
             }
             complete_msg = self.format % params
 
@@ -54,7 +54,7 @@ class FileLogger(StreamLogger):
         self.filename = filename
         if file is None:
             if filename is None:
-                raise ValueError("Either file or filename MUST be supplied.")
+                raise ValueError('Either file or filename MUST be supplied.')
             file = open(filename, 'ab')
 
         StreamLogger.__init__(self, bus, file, level, format, encoding)

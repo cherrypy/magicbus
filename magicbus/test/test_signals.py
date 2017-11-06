@@ -10,7 +10,7 @@ from magicbus.test import Process
 
 logfile = os.path.join(os.path.dirname(thismodule), 'test_signals.log')
 loggers.FileLogger(bus, logfile).subscribe()
-pidfile = opsys.PIDFile(bus, os.path.join(thismodule + ".pid"))
+pidfile = opsys.PIDFile(bus, os.path.join(thismodule + '.pid'))
 
 
 class TestSignalHandling(object):
@@ -20,14 +20,14 @@ class TestSignalHandling(object):
         try:
             from signal import SIGHUP
         except ImportError:
-            return "skipped (no SIGHUP)"
+            return 'skipped (no SIGHUP)'
 
         try:
             from os import kill
         except ImportError:
-            return "skipped (no os.kill)"
+            return 'skipped (no os.kill)'
 
-        p = Process([sys.executable, thismodule, "tty"])
+        p = Process([sys.executable, thismodule, 'tty'])
         p.start()
         pid = pidfile.wait()
         kill(pid, SIGHUP)
@@ -38,19 +38,19 @@ class TestSignalHandling(object):
         try:
             from signal import SIGHUP, SIGTERM
         except ImportError:
-            return "skipped (no SIGHUP)"
+            return 'skipped (no SIGHUP)'
 
         try:
             from os import kill
         except ImportError:
-            return "skipped (no os.kill)"
+            return 'skipped (no os.kill)'
 
         if os.name not in ['posix']:
-            return "skipped (not on posix)"
+            return 'skipped (not on posix)'
 
         os.remove(logfile)
 
-        p = Process([sys.executable, thismodule, "daemonize"])
+        p = Process([sys.executable, thismodule, 'daemonize'])
         p.start()
         pid = pidfile.wait()
         kill(pid, SIGHUP)
@@ -68,15 +68,15 @@ class TestSignalHandling(object):
         try:
             from signal import SIGTERM
         except ImportError:
-            return "skipped (no SIGTERM)"
+            return 'skipped (no SIGTERM)'
 
         try:
             from os import kill
         except ImportError:
-            return "skipped (no os.kill)"
+            return 'skipped (no os.kill)'
 
         # Spawn a normal, undaemonized process.
-        p = Process([sys.executable, thismodule, "tty"])
+        p = Process([sys.executable, thismodule, 'tty'])
         p.start()
         pid = pidfile.wait()
         kill(pid, SIGTERM)
@@ -87,18 +87,18 @@ class TestSignalHandling(object):
         try:
             from signal import SIGTERM
         except ImportError:
-            return "skipped (no SIGTERM)"
+            return 'skipped (no SIGTERM)'
 
         try:
             from os import kill
         except ImportError:
-            return "skipped (no os.kill)"
+            return 'skipped (no os.kill)'
 
         if os.name not in ['posix']:
-            return "skipped (not on posix)"
+            return 'skipped (not on posix)'
 
         # Spawn a daemonized process and test again.
-        p = Process([sys.executable, thismodule, "daemonize"])
+        p = Process([sys.executable, thismodule, 'daemonize'])
         p.start()
         pid = pidfile.wait()
         kill(pid, SIGTERM)
@@ -111,5 +111,5 @@ if __name__ == '__main__':
         opsys.Daemonizer(bus).subscribe()
     pidfile.subscribe()
     signalhandler.SignalHandler(bus).subscribe()
-    bus.transition("RUN")
+    bus.transition('RUN')
     bus.block()

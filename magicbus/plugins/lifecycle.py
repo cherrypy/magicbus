@@ -26,13 +26,13 @@ class CleanExit(plugins.SimplePlugin):
 
     def _clean_exit(self):
         """An atexit handler which asserts the Bus is not running."""
-        if self.bus.state != "EXITED":
+        if self.bus.state != 'EXITED':
             warnings.warn(
-                "The main thread is exiting, but the Bus is in the %r state; "
-                "shutting it down automatically now. You must either call "
-                "bus.block() after start(), or call bus.exit() before the "
-                "main thread exits." % self.bus.state, RuntimeWarning)
-            self.bus.transition("EXITED")
+                'The main thread is exiting, but the Bus is in the %r state; '
+                'shutting it down automatically now. You must either call '
+                'bus.block() after start(), or call bus.exit() before the '
+                'main thread exits.' % self.bus.state, RuntimeWarning)
+            self.bus.transition('EXITED')
 
 
 class ThreadWait(plugins.SimplePlugin):
@@ -43,7 +43,7 @@ class ThreadWait(plugins.SimplePlugin):
         # It's also good to let them all shut down before allowing
         # the main thread to call atexit handlers.
         # See http://www.cherrypy.org/ticket/751.
-        self.bus.log("Waiting for child threads to terminate...")
+        self.bus.log('Waiting for child threads to terminate...')
         for t in threading.enumerate():
             if t == threading.currentThread() or not t.isAlive():
                 continue
@@ -52,7 +52,7 @@ class ThreadWait(plugins.SimplePlugin):
             if t.daemon or isinstance(t, threading._MainThread):
                 continue
 
-            self.bus.log("Waiting for thread %s." % t.getName())
+            self.bus.log('Waiting for thread %s.' % t.getName())
             t.join()
     EXIT.priority = 100
 

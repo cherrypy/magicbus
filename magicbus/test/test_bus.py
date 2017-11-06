@@ -18,14 +18,14 @@ class GraphTests(unittest.TestCase):
     #      |               V   V    /
     #      +----------------> STOP
     transitions = {
-        "START": ("RUN", "STOP", "EXIT"),
-        "RUN": "STOP",
-        "START_ERROR": "STOP",
-        "STOP": "IDLE",
-        "IDLE": ("START", "EXIT"),
-        "STOP_ERROR": "EXIT",
-        "EXIT": "EXITED",
-        "EXIT_ERROR": "EXITED",
+        'START': ('RUN', 'STOP', 'EXIT'),
+        'RUN': 'STOP',
+        'START_ERROR': 'STOP',
+        'STOP': 'IDLE',
+        'IDLE': ('START', 'EXIT'),
+        'STOP_ERROR': 'EXIT',
+        'EXIT': 'EXITED',
+        'EXIT_ERROR': 'EXITED',
     }
 
     next = {
@@ -61,8 +61,8 @@ class GraphTests(unittest.TestCase):
         ('STOP_ERROR', 'EXIT'): 'EXIT',
     }
 
-    states = set(["START", "RUN", "STOP", "IDLE", "EXIT", "EXITED",
-                 "START_ERROR", "STOP_ERROR", "EXIT_ERROR"])
+    states = set(['START', 'RUN', 'STOP', 'IDLE', 'EXIT', 'EXITED',
+                 'START_ERROR', 'STOP_ERROR', 'EXIT_ERROR'])
 
     def test_shortest_path(self):
         g = Graph.from_edges(self.transitions)
