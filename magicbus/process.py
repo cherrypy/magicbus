@@ -132,7 +132,7 @@ class ProcessBus(base.Bus):
         self.transition("IDLE")
         self.transition("RUN")
 
-    def block(self, interval=0.1):
+    def block(self, interval=0.1, sleep=False):
         """Wait for the EXITED state, KeyboardInterrupt or SystemExit.
 
         This function is intended to be called only by the main thread.
@@ -142,7 +142,7 @@ class ProcessBus(base.Bus):
         the actual execv call (required on some platforms).
         """
         try:
-            self.wait("EXITED", interval=interval, channel='main')
+            self.wait("EXITED", interval=interval, channel='main', sleep=sleep)
         except (KeyboardInterrupt, IOError):
             # The time.sleep call might raise
             # "IOError: [Errno 4] Interrupted function call" on KBInt.
