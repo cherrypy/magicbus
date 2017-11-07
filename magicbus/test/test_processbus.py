@@ -192,6 +192,7 @@ class BusMethodTests(unittest.TestCase):
 
     def test_wait(self):
         b = ProcessBus()
+        self.log(b)
 
         def f(desired_state):
             time.sleep(0.2)
@@ -221,6 +222,11 @@ class BusMethodTests(unittest.TestCase):
         def g():
             time.sleep(0.4)
 
+        def main_listener():
+            main_calls.append(1)
+        main_calls = []
+        b.subscribe("main", main_listener)
+
         f_thread = threading.Thread(target=f, name='f')
         f_thread.start()
         threading.Thread(target=g, name='g').start()
@@ -249,6 +255,10 @@ class BusMethodTests(unittest.TestCase):
                 'Bus state: EXITED'
             ]
         )
+
+        # While the bus was blocked, it should have published periodically
+        # to the "main" channel.
+        self.assertGreater(len(main_calls), 0)
 
     @unittest.skip("Fails intermittently; https://tinyurl.com/ybwwu4gz")
     def test_start_with_callback(self):

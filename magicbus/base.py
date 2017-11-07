@@ -169,13 +169,7 @@ class Bus(object):
             id = hex(random.randint(0, sys.maxint))[-8:]
         self.id = id
         self._priorities = {}
-
-        if select:
-            (self._state_transition_pipe_read,
-             self._state_transition_pipe_write) = os.pipe()
-        else:
-            (self._state_transition_pipe_read,
-             self._state_transition_pipe_write) = (None, None)
+        self._state_transition_pipes = set()
 
     @property
     def states(self):
@@ -204,8 +198,11 @@ class Bus(object):
         """
         try:
             self.state = newstate
-            if self._state_transition_pipe_write is not None:
-                os.write(self._state_transition_pipe_write, '1')
+
+            # Write to any pipes created by threads calling self.wait().
+            # Use list() to avoid "Set changed size during iteration" errors.
+            for read_fd, write_fd in list(self._state_transition_pipes):
+                os.write(write_fd, "1")
 
             # Note: logging here means 1) the initial transition
             # will not be logged if loggers are set up in the initial
@@ -294,28 +291,52 @@ class Bus(object):
             raise exc
         return output
 
-    def wait(self, state, interval=0.1, channel=None):
-        """Poll for the given state(s) at intervals; publish to channel."""
+    def wait(self, state, interval=0.1, channel=None, sleep=False):
+        """Poll for the given state(s) at intervals; publish to channel.
+
+        If sleep is True, the calling thread loops, sleeping for the given
+        interval each time, then returning only when the bus state is
+        one of the given states to wait for.
+
+        If sleep is False (the default) and the operating system supports
+        I/O multiplexing via the 'select' module, then an anonymous pipe
+        will be used to signal the waiting thread to wake up whenever
+        the state transitions. This allows the waiting thread to return
+        when the bus shuts down, for example, rather than waiting for
+        the sleep interval to elapse first. Each thread that calls wait()
+        creates a new pipe, so if file descriptors are in short supply
+        on your system you might need to use sleep instead.
+        """
         if isinstance(state, (tuple, list)):
             _states_to_wait_for = state
         else:
             _states_to_wait_for = [state]
 
+        if select:
+            pipe = os.pipe()
+            read_fd, write_fd = pipe
+            self._state_transition_pipes.add(pipe)
+
         def _wait():
-            while self.state not in _states_to_wait_for:
-                if self._state_transition_pipe_read is not None:
-                    try:
-                        r, w, x = select.select([self._state_transition_pipe_read], [], [], interval)
-                        if r:
-                            os.read(self._state_transition_pipe_read, 1)
-                    except (select.error, OSError):
-                        # Interrupted due to a signal (being handled by some
-                        # other thread). No need to panic, here, just check
-                        # the new state and proceed/return.
-                        pass
-                else:
-                    time.sleep(interval)
-                self.publish(channel)
+            try:
+                while self.state not in _states_to_wait_for:
+                    if select:
+                        try:
+                            r, w, x = select.select([read_fd], [], [], interval)
+                            if r:
+                                os.read(read_fd, 1)
+                        except (select.error, OSError):
+                            # Interrupted due to a signal (being handled by some
+                            # other thread). No need to panic, here, just check
+                            # the new state and proceed/return.
+                            pass
+                    else:
+                        time.sleep(interval)
+                    self.publish(channel)
+            finally:
+                self._state_transition_pipes.discard(pipe)
+                os.close(read_fd)
+                os.close(write_fd)
 
         # From http://psyco.sourceforge.net/psycoguide/bugs.html:
         # "The compiled machine code does not include the regular polling

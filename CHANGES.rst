@@ -1,3 +1,8 @@
+v4.1.0
+======
+
+* #4: Give each waiting thread its own state transition pipe.
+
 v4.0.0
 ======
 
