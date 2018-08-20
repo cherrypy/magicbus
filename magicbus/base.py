@@ -166,7 +166,7 @@ class Bus(object):
             self.listeners[c] = set()
 
         if id is None:
-            id = hex(random.randint(0, sys.maxint))[-8:]
+            id = hex(random.randint(0, sys.maxsize))[-8:]
         self.id = id
         self._priorities = {}
         self._state_transition_pipes = set()
@@ -202,7 +202,7 @@ class Bus(object):
             # Write to any pipes created by threads calling self.wait().
             # Use list() to avoid "Set changed size during iteration" errors.
             for read_fd, write_fd in list(self._state_transition_pipes):
-                os.write(write_fd, "1")
+                os.write(write_fd, b"1")
 
             # Note: logging here means 1) the initial transition
             # will not be logged if loggers are set up in the initial
