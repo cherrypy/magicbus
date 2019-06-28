@@ -1,3 +1,8 @@
+v4.1.1
+======
+
+* #5: Corrected license in Trove Classifier.
+
 v4.1.0
 ======
 
