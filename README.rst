@@ -1,6 +1,10 @@
 .. image:: https://img.shields.io/pypi/v/magicbus.svg
    :target: https://pypi.org/project/magicbus
 
+.. image:: https://tidelift.com/badges/package/pypi/MagicBus
+   :target: https://tidelift.com/subscription/pkg/pypi-magicbus?utm_source=pypi-magicbus&utm_medium=readme
+   :alt: MagicBus is available as part of the Tidelift Subscription
+
 .. image:: https://img.shields.io/pypi/pyversions/magicbus.svg
 
 .. image:: https://img.shields.io/travis/cherrypy/magicbus/master.svg
