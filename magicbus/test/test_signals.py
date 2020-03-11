@@ -54,6 +54,7 @@ class TestSignalHandling(object):
         p.start()
         pid = pidfile.wait()
         kill(pid, SIGHUP)
+        pidfile.join(poll_interval=0)
 
         # Give the server some time to restart
         time.sleep(1)
