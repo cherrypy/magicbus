@@ -38,4 +38,4 @@ python:
     path: .
     extra_requirements:
     - docs
-  pip_install: true
+  system_packages: false
