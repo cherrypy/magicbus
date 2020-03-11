@@ -270,8 +270,16 @@ class PIDFile(SimplePlugin):
 
     def join(self, timeout=None, poll_interval=0.1):
         """Return when the PID file does not exist, or the timeout expires."""
+        try:
+            initial_stat = os.stat(self.pidfile)
+        except OSError:  # file does not exist
+            return
+
         starttime = time.time()
         while timeout is None or time.time() - starttime <= timeout:
-            if not os.path.exists(self.pidfile):
-                return
+            try:
+                if initial_stat != os.stat(self.pidfile):
+                    return  # file has been changed/replaced
+            except OSError:
+                return  # file does not exist
             time.sleep(poll_interval)
