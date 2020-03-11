@@ -36,8 +36,8 @@ params = dict(
     ],
     extras_require={
         'testing': [
-            'nose',
             'collective.checkdocs',
+            'pytest',
         ],
         'docs': [
             'sphinx',

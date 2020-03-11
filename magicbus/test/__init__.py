@@ -1,6 +1,6 @@
 """Regression test suite for magicbus.
 
-Run 'nosetests -s test/' to exercise all tests.
+Run 'tox' to exercise all tests.
 """
 
 from magicbus.compat import HTTPServer, HTTPConnection, HTTPHandler
