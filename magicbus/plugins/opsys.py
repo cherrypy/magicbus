@@ -288,7 +288,4 @@ class PIDFile(SimplePlugin):
             if pid_creation_time > initial_creation_time:
                 return  # file has been replaced
 
-            if pid_stat != initial_stat:
-                return  # file has been changed
-
             time.sleep(poll_interval)
