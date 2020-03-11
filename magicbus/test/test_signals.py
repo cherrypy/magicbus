@@ -31,7 +31,7 @@ class TestSignalHandling(object):
         p.start()
         pid = pidfile.wait()
         kill(pid, SIGHUP)
-        pidfile.join()
+        pidfile.join(poll_interval=0)
 
     def test_SIGHUP_daemonized(self):
         # When daemonized, SIGHUP should restart the server.
@@ -61,7 +61,7 @@ class TestSignalHandling(object):
         assertNotEqual(new_pid, None)
         assertNotEqual(new_pid, pid)
         kill(new_pid, SIGTERM)
-        pidfile.join()
+        pidfile.join(poll_interval=0)
 
     def test_SIGTERM_tty(self):
         # SIGTERM should shut down the server whether daemonized or not.
@@ -80,7 +80,7 @@ class TestSignalHandling(object):
         p.start()
         pid = pidfile.wait()
         kill(pid, SIGTERM)
-        pidfile.join()
+        pidfile.join(poll_interval=0)
 
     def test_SIGTERM_daemonized(self):
         # SIGTERM should shut down the server whether daemonized or not.
@@ -102,7 +102,7 @@ class TestSignalHandling(object):
         p.start()
         pid = pidfile.wait()
         kill(pid, SIGTERM)
-        pidfile.join()
+        pidfile.join(poll_interval=0)
 
 
 if __name__ == '__main__':
