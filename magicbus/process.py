@@ -6,7 +6,7 @@ from magicbus.plugins import lifecycle
 
 
 class ProcessBus(base.Bus):
-    """A Bus subclass for managing the state of a process.
+    r"""A Bus subclass for managing the state of a process.
 
     In general, there should only ever be a single ProcessBus object
     per process. Frameworks and site containers share a single ProcessBus
@@ -35,17 +35,17 @@ class ProcessBus(base.Bus):
     of our naive transitions to its own intermediate state, and adding
     error states. That is::
 
-         XXXXXXXXXXXXXXXX START              XXXXXX-> EXIT_ERROR
-         |              /   |   A            X            |
-         V             V    |    \           X            V
-    START_ERROR <-XX RUN    |    IDLE ----> EXIT ----> EXITED ---> X
-         |             \    |    A| A
-         |              V   V   / |  \
-         +---------------> STOP   X    ENTER <--- INITIAL
-                            X     X      X
-                            |     |      X
-                            V     V      X
-                           STOP_ERROR <-XX
+           XXXXXXXXXXXXXXXX START              XXXXXX-> EXIT_ERROR
+           |              /   |   A            X            |
+           V             V    |    \           X            V
+      START_ERROR <-XX RUN    |    IDLE ----> EXIT ----> EXITED ---> X
+           |             \    |    A| A
+           |              V   V   / |  \
+           +---------------> STOP   X    ENTER <--- INITIAL
+                              X     X      X
+                              |     |      X
+                              V     V      X
+                             STOP_ERROR <-XX
 
     Now the movement to the "RUN" state from the "IDLE" state encompasses
     two transitions, four if you count error transitions.

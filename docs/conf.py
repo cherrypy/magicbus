@@ -3,11 +3,19 @@
 
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.intersphinx',
     'jaraco.packaging.sphinx',
     'rst.linker',
 ]
 
 master_doc = 'index'
+
+intersphinx_mapping = {
+    'cheroot': ('https://cheroot.cherrypy.org/en/latest/', None),
+    'cherrypy': ('https://docs.cherrypy.org/en/latest/', None),
+    'python': ('https://docs.python.org/3', None),
+    'python2': ('https://docs.python.org/2', None),
+}
 
 link_files = {
     '../CHANGES.rst': dict(

@@ -13,6 +13,12 @@ Welcome to magicbus documentation!
     :show-inheritance:
 
 
+.. automodule:: magicbus.base
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
 Indices and tables
 ==================
 
