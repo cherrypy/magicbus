@@ -275,11 +275,20 @@ class PIDFile(SimplePlugin):
         except OSError:  # file does not exist
             return
 
+        initial_creation_time = initial_stat.st_ctime
+
         starttime = time.time()
         while timeout is None or time.time() - starttime <= timeout:
             try:
-                if initial_stat != os.stat(self.pidfile):
-                    return  # file has been changed/replaced
+                pid_stat = os.stat(self.pidfile)
             except OSError:
                 return  # file does not exist
+
+            pid_creation_time = pid_stat.st_ctime
+            if pid_creation_time > initial_creation_time:
+                return  # file has been replaced
+
+            if pid_stat != initial_stat:
+                return  # file has been changed
+
             time.sleep(poll_interval)
