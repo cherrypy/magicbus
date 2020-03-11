@@ -1,3 +1,8 @@
+v4.1.2
+======
+
+* #6: Add a few Python 3 incompatibilities.
+
 v4.1.1
 ======
 
