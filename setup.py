@@ -25,6 +25,11 @@ params = dict(
     description=description or name,
     long_description=long_description,
     url='https://github.com/cherrypy/' + name,
+    project_urls={
+        'Tidelift: funding':
+        'https://tidelift.com/subscription/pkg/pypi-magicbus'
+        '?utm_source=pypi-magicbus&utm_medium=referral&utm_campaign=pypi',
+    },
     packages=setuptools.find_packages(),
     include_package_data=True,
     namespace_packages=(
