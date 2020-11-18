@@ -1,15 +1,15 @@
-dist: trusty
-sudo: false
+os: linux
+dist: focal
 language: python
 
 jobs:
   fast_finish: true
   include:
-  - python: &latest_stable 2.7
-  - python: &latest_py3 3.6
+  - python: &latest_legacy 2.7
+  - python: &latest_stable 3.9
   - stage: deploy
     if: tag IS present
-    python: *latest_stable
+    python: *latest_legacy
     install: skip
     script: skip
     deploy:
