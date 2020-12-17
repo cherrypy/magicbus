@@ -2,7 +2,7 @@
 from magicbus.compat import ntob, unicodestr
 import datetime
 import sys
-
+import six
 from magicbus.plugins import SimplePlugin
 
 
@@ -30,7 +30,7 @@ class StreamLogger(SimplePlugin):
             if self.encoding is not None:
                 if isinstance(complete_msg, unicodestr):
                     complete_msg = complete_msg.encode(self.encoding)
-
+            complete_msg = six.ensure_str(complete_msg)
             self.stream.write(complete_msg)
             self.stream.flush()
 
