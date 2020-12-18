@@ -38,6 +38,7 @@ params = dict(
     ),
     python_requires='>=2.7',
     install_requires=[
+        'six',
     ],
     extras_require={
         'testing': [
