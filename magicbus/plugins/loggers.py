@@ -2,7 +2,6 @@
 
 import datetime
 import sys
-import six
 from magicbus.plugins import SimplePlugin
 
 
@@ -10,7 +9,7 @@ class StreamLogger(SimplePlugin):
 
     default_format = '[%(timestamp)s] (Bus %(bus)s) %(message)s\n'
 
-    def __init__(self, bus, stream, level=None, format=None, encoding='utf-8'):
+    def __init__(self, bus, stream, level=None, format=None, encoding=None):
         SimplePlugin.__init__(self, bus)
         self.stream = stream
         self.level = level
@@ -30,27 +29,29 @@ class StreamLogger(SimplePlugin):
             if self.encoding is not None:
                 if isinstance(complete_msg, str):
                     complete_msg = complete_msg.encode(self.encoding)
-            complete_msg = six.ensure_str(complete_msg)
+            else:
+                if not isinstance(complete_msg, unicodestr):
+                    complete_msg = complete_msg.decode("utf-8")
             self.stream.write(complete_msg)
             self.stream.flush()
 
 
 class StdoutLogger(StreamLogger):
 
-    def __init__(self, bus, level=None, format=None, encoding='utf-8'):
+    def __init__(self, bus, level=None, format=None, encoding=None):
         StreamLogger.__init__(self, bus, sys.stdout, level, format, encoding)
 
 
 class StderrLogger(StreamLogger):
 
-    def __init__(self, bus, level=None, format=None, encoding='utf-8'):
+    def __init__(self, bus, level=None, format=None, encoding=None):
         StreamLogger.__init__(self, bus, sys.stderr, level, format, encoding)
 
 
 class FileLogger(StreamLogger):
 
     def __init__(self, bus, filename=None, file=None,
-                 level=None, format=None, encoding='utf8'):
+                 level=None, format=None, encoding=None):
         self.filename = filename
         if file is None:
             if filename is None:
