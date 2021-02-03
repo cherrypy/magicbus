@@ -9,7 +9,7 @@ class StreamLogger(SimplePlugin):
 
     default_format = '[%(timestamp)s] (Bus %(bus)s) %(message)s\n'
 
-    def __init__(self, bus, stream, level=None, format=None, encoding='utf8'):
+    def __init__(self, bus, stream, level=None, format=None, encoding='utf-8'):
         SimplePlugin.__init__(self, bus)
         self.stream = stream
         self.level = level
@@ -51,7 +51,7 @@ class StderrLogger(StreamLogger):
 class FileLogger(StreamLogger):
 
     def __init__(self, bus, filename=None, file=None,
-                 level=None, format=None, encoding='utf8'):
+                 level=None, format=None, encoding='utf-8'):
         self.filename = filename
         if file is None:
             if filename is None:
