@@ -30,7 +30,7 @@ class StreamLogger(SimplePlugin):
                 if isinstance(complete_msg, str):
                     complete_msg = complete_msg.encode(self.encoding)
             else:
-                if isinstance(complete_msg, unicodestr):
+                if isinstance(complete_msg, str):
                     encoding = self.encoding or "utf-8"
                     complete_msg = complete_msg.encode(encoding, errors="backslashreplace")
 
