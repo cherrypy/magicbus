@@ -26,9 +26,12 @@ class StreamLogger(SimplePlugin):
             }
             complete_msg = self.format % params
 
-            if isinstance(complete_msg, unicodestr):
-                encoding = self.encoding or "utf-8"
-                complete_msg = complete_msg.encode(encoding, errors="backslashreplace")
+            if self.encoding is not None:
+                if isinstance(complete_msg, unicodestr):
+                    complete_msg = complete_msg.encode(self.encoding)
+            else:
+                if not isinstance(complete_msg, unicodestr):
+                    complete_msg = complete_msg.decode("utf-8")
 
             self.stream.write(complete_msg)
             self.stream.flush()
