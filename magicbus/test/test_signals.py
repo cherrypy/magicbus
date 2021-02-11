@@ -5,7 +5,6 @@ import time
 
 from magicbus import bus
 from magicbus.plugins import loggers, opsys, signalhandler
-from magicbus.test import assertNotEqual
 from magicbus.test import Process
 
 logfile = os.path.join(os.path.dirname(thismodule), 'test_signals.log')
@@ -58,8 +57,8 @@ class TestSignalHandling(object):
         # Give the server some time to restart
         time.sleep(1)
         new_pid = pidfile.wait(5)
-        assertNotEqual(new_pid, None)
-        assertNotEqual(new_pid, pid)
+        assert new_pid is not None
+        assert new_pid != pid
         kill(new_pid, SIGTERM)
         pidfile.join()
 

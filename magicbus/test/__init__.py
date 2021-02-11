@@ -12,16 +12,6 @@ import time
 from magicbus.plugins import SimplePlugin
 
 
-def assertEqual(x, y, msg=None):
-    if not x == y:
-        raise AssertionError(msg or '%r != %r' % (x, y))
-
-
-def assertNotEqual(x, y, msg=None):
-    if x == y:
-        raise AssertionError(msg or '%r == %r' % (x, y))
-
-
 class Process(object):
 
     def __init__(self, args):
