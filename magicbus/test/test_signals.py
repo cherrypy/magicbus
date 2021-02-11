@@ -58,7 +58,11 @@ class TestSignalHandling(object):
 
         # Give the server some time to restart
         time.sleep(1)
-        new_pid = pidfile.wait(5)
+        for _ in range(6):
+            new_pid = pidfile.wait(5)
+            if new_pid != pid:
+                break
+            time.sleep(5)
         assert new_pid is not None
         assert new_pid != pid
         kill(new_pid, SIGTERM)
