@@ -45,7 +45,7 @@ class ThreadWait(plugins.SimplePlugin):
         # See http://www.cherrypy.org/ticket/751.
         self.bus.log('Waiting for child threads to terminate...')
         for t in threading.enumerate():
-            if t == threading.currentThread() or not t.isAlive():
+            if t == threading.current_thread() or not t.is_alive():
                 continue
 
             # Note that any dummy (external) threads are always daemonic.
