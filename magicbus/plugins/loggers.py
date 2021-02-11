@@ -2,6 +2,7 @@
 
 import datetime
 import sys
+
 from magicbus.plugins import SimplePlugin
 
 
@@ -52,7 +53,7 @@ class StderrLogger(StreamLogger):
 class FileLogger(StreamLogger):
 
     def __init__(self, bus, filename=None, file=None,
-                 level=None, format=None, encoding='utf-8'):
+                 level=None, format=None, encoding='utf8'):
         self.filename = filename
         if file is None:
             if filename is None:
