@@ -1,6 +1,5 @@
 import threading
 import time
-import unittest
 
 import pytest
 
@@ -11,7 +10,7 @@ from magicbus.process import ProcessBus
 msg = 'Listener %d on channel %s: %s.'
 
 
-class PublishSubscribeTests(unittest.TestCase):
+class TestPublishSubscribe(object):
 
     def get_listener(self, channel, index):
         def listener(*args):
@@ -82,9 +81,7 @@ class PublishSubscribeTests(unittest.TestCase):
         assert self.responses == expected
 
 
-class BusMethodTests(unittest.TestCase):
-
-    maxDiff = None
+class TestBusMethod(object):
 
     def log(self, bus, level=10):
         self._log_entries = []
@@ -213,7 +210,7 @@ class BusMethodTests(unittest.TestCase):
 
             # The wait method MUST wait for the given state(s).
             if b.state not in states_to_wait_for:
-                self.fail('State %r not in %r' % (b.state, states_to_wait_for))
+                pytest.fail('State %r not in %r' % (b.state, states_to_wait_for))
 
     def test_block(self):
         b = ProcessBus()
@@ -264,7 +261,7 @@ class BusMethodTests(unittest.TestCase):
         # to the "main" channel.
         assert len(main_calls) > 0
 
-    @unittest.skip("Fails intermittently; https://tinyurl.com/ybwwu4gz")
+    @pytest.mark.skip("Fails intermittently; https://tinyurl.com/ybwwu4gz")
     def test_start_with_callback(self):
         b = ProcessBus()
         self.log(b)
@@ -308,11 +305,7 @@ class BusMethodTests(unittest.TestCase):
             b.log('You are lost and gone forever', traceback=True)
             lastmsg = self._log_entries[-1]
             if 'Traceback' not in lastmsg or 'NameError' not in lastmsg:
-                self.fail('Last log message %r did not contain '
+                pytest.fail('Last log message %r did not contain '
                           'the expected traceback.' % lastmsg)
         else:
-            self.fail('NameError was not raised as expected.')
-
-
-if __name__ == '__main__':
-    unittest.main()
+            pytest.fail('NameError was not raised as expected.')
