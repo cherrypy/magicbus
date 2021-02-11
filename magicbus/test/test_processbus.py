@@ -226,7 +226,7 @@ class TestBusMethod(object):
         def main_listener():
             main_calls.append(1)
         main_calls = []
-        b.subscribe("main", main_listener)
+        b.subscribe('main', main_listener)
 
         f_thread = threading.Thread(target=f, name='f')
         f_thread.start()
@@ -261,7 +261,7 @@ class TestBusMethod(object):
         # to the "main" channel.
         assert len(main_calls) > 0
 
-    @pytest.mark.skip("Fails intermittently; https://tinyurl.com/ybwwu4gz")
+    @pytest.mark.skip('Fails intermittently; https://tinyurl.com/ybwwu4gz')
     def test_start_with_callback(self):
         b = ProcessBus()
         self.log(b)

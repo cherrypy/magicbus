@@ -202,7 +202,7 @@ class Bus(object):
             # Write to any pipes created by threads calling self.wait().
             # Use list() to avoid "Set changed size during iteration" errors.
             for read_fd, write_fd in list(self._state_transition_pipes):
-                os.write(write_fd, b"1")
+                os.write(write_fd, b'1')
 
             # Note: logging here means 1) the initial transition
             # will not be logged if loggers are set up in the initial
