@@ -2,6 +2,8 @@ import threading
 import time
 import unittest
 
+import pytest
+
 from magicbus.base import Bus, ChannelFailures
 from magicbus.process import ProcessBus
 
@@ -35,7 +37,7 @@ class PublishSubscribeTests(unittest.TestCase):
                     b.publish(channel)
                     expected.extend([msg % (i, channel, ()) for i in (2, 1, 3, 0)])
 
-            self.assertEqual(self.responses, expected)
+            assert self.responses == expected
         finally:
             # Exit so the atexit handler doesn't complain.
             b.transition('EXITED')
@@ -58,12 +60,13 @@ class PublishSubscribeTests(unittest.TestCase):
             b.publish(channel)
             expected.extend([msg % (i, channel, ()) for i in (1, 3, 0, 2)])
 
-        self.assertEqual(self.responses, expected)
+        assert self.responses == expected
 
     def test_listener_errors(self):
         b = Bus()
 
         self.responses, expected = [], []
+        # FIXME: should this be bigger than 0 non-log channels?
         channels = [c for c in b.listeners if c != 'log']
 
         for channel in channels:
@@ -72,10 +75,11 @@ class PublishSubscribeTests(unittest.TestCase):
             b.subscribe(channel, lambda: None, priority=20)
 
         for channel in channels:
-            self.assertRaises(ChannelFailures, b.publish, channel, 123)
+            with pytest.raises(ChannelFailures):  # FIXME: add `match=`
+                b.publish(channel, 123)
             expected.append(msg % (1, channel, (123,)))
 
-        self.assertEqual(self.responses, expected)
+        assert self.responses == expected
 
 
 class BusMethodTests(unittest.TestCase):
@@ -92,7 +96,7 @@ class BusMethodTests(unittest.TestCase):
         bus.subscribe('log', logit)
 
     def assertLog(self, entries):
-        self.assertEqual(self._log_entries, entries)
+        assert self._log_entries == entries
 
     def get_listener(self, channel, index):
         def listener(arg=None):
@@ -111,13 +115,13 @@ class BusMethodTests(unittest.TestCase):
         b.transition('RUN')
         try:
             # The start method MUST call all 'start' listeners.
-            self.assertEqual(
-                set(self.responses),
+            assert (
+                set(self.responses) ==
                 set([msg % (i, 'START', None) for i in range(num)])
             )
             # The transition method MUST move the state to RUN
             # (or START_ERROR, if errors occur)
-            self.assertEqual(b.state, 'RUN')
+            assert b.state == 'RUN'
 
             # The start method MUST log its states.
             self.assertLog([
@@ -144,12 +148,12 @@ class BusMethodTests(unittest.TestCase):
             b.transition('IDLE')
 
             # The idle transition MUST call all 'stop' listeners.
-            self.assertEqual(
-                set(self.responses),
+            assert (
+                set(self.responses) ==
                 set(msg % (i, 'STOP', None) for i in range(num))
             )
             # The idle method MUST move the state to IDLE
-            self.assertEqual(b.state, 'IDLE')
+            assert b.state == 'IDLE'
             # The idle method MUST log its states.
             self.assertLog([
                 'Bus state: STOP',
@@ -173,13 +177,13 @@ class BusMethodTests(unittest.TestCase):
 
         # The bus MUST call all 'EXIT' listeners,
         # and then all 'EXITED' listeners.
-        self.assertEqual(
-            set(self.responses),
+        assert (
+            set(self.responses) ==
             set([msg % (i, 'EXIT', None) for i in range(num)] +
                 [msg % (i, 'EXITED', None) for i in range(num)])
         )
         # The bus MUST move the state to EXITED
-        self.assertEqual(b.state, 'EXITED')
+        assert b.state == 'EXITED'
 
         # The bus MUST log its states.
         self.assertLog([
@@ -231,23 +235,23 @@ class BusMethodTests(unittest.TestCase):
         f_thread.start()
         threading.Thread(target=g, name='g').start()
         threads = [t for t in threading.enumerate() if not t.daemon]
-        self.assertEqual(len(threads), 3)
+        assert len(threads) == 3
 
         b.block()
         f_thread.join()
 
         # The block method MUST wait for the EXITED state.
-        self.assertEqual(b.state, 'EXITED')
+        assert b.state == 'EXITED'
         # The block method MUST wait for ALL non-main, non-daemon threads to
         # finish.
         threads = [t for t in threading.enumerate() if not t.daemon]
-        self.assertEqual(len(threads), 1)
+        assert len(threads) == 1
         # The last message will mention an indeterminable thread name; ignore
         # it
-        self.assertEqual(
+        assert (
             [entry for entry in self._log_entries
              if not entry.startswith('Publishing')
-             and not entry.startswith('Waiting')],
+             and not entry.startswith('Waiting')] ==
             [
                 'Bus state: ENTER',
                 'Bus state: IDLE',
@@ -258,7 +262,7 @@ class BusMethodTests(unittest.TestCase):
 
         # While the bus was blocked, it should have published periodically
         # to the "main" channel.
-        self.assertGreater(len(main_calls), 0)
+        assert len(main_calls) > 0
 
     @unittest.skip("Fails intermittently; https://tinyurl.com/ybwwu4gz")
     def test_start_with_callback(self):
@@ -279,9 +283,9 @@ class BusMethodTests(unittest.TestCase):
             time.sleep(0.2)
 
             # The callback method MUST wait for the STARTED state.
-            self.assertEqual(b.state, 'RUN')
+            assert b.state == 'RUN'
             # The callback method MUST run after all start methods.
-            self.assertEqual(events, ['g', ('f', (1, 3, 5), {'foo': 'bar'})])
+            assert events == ['g', ('f', (1, 3, 5), {'foo': 'bar'})]
         finally:
             b.transition('EXITED')
 

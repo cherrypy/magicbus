@@ -5,7 +5,7 @@ import sys
 
 from magicbus import bus
 from magicbus.plugins import opsys
-from magicbus.test import assertEqual, Process, WebAdapter, WebService
+from magicbus.test import Process, WebAdapter, WebService
 from magicbus.test import WebHandler
 
 # from magicbus.plugins import loggers
@@ -46,10 +46,9 @@ class TestOpsys(object):
         try:
             # Just get the pid of the daemonization process.
             resp = service.do_GET('/pid')
-            assertEqual(resp.status, 200)
+            assert resp.status == 200
             page_pid = int(resp.read())
-            assertEqual(ntob(str(page_pid)),
-                        open(pidfile.pidfile, 'rb').read())
+            assert ntob(str(page_pid)) == open(pidfile.pidfile, 'rb').read()
         finally:
             # Shut down the spawned process
             service.do_GET('/exit')

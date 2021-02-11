@@ -1,6 +1,6 @@
 from magicbus.process import ProcessBus
 from magicbus.plugins import servers
-from magicbus.test import assertEqual, WebService, WebHandler
+from magicbus.test import WebService, WebHandler
 
 # from magicbus.plugins import loggers
 # loggers.StdoutLogger(bus).subscribe()
@@ -32,6 +32,6 @@ class TestServers(object):
         # Raise a keyboard interrupt in the HTTP server's main thread.
         bus.transition('RUN')
         resp = service.do_GET('/ctrlc')
-        assertEqual(resp.status, 200)
+        assert resp.status == 200
         bus.block()
-        assertEqual(bus.state, 'EXITED')
+        assert bus.state == 'EXITED'

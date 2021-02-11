@@ -66,8 +66,8 @@ class GraphTests(unittest.TestCase):
 
     def test_shortest_path(self):
         g = Graph.from_edges(self.transitions)
-        self.assertEqual(g, self.next)
+        assert g == self.next
 
     def test_states(self):
         g = Graph(self.next)
-        self.assertEqual(g.states, self.states)
+        assert g.states == self.states
