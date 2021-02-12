@@ -48,7 +48,9 @@ class TestOpsys(object):
             resp = service.do_GET('/pid')
             assert resp.status == 200
             page_pid = int(resp.read())
-            assert ntob(str(page_pid)) == open(pidfile.pidfile, 'rb').read()
+            with open(pidfile.pidfile, 'rb') as pid_file:
+                actual_pid = pid_file.read()
+            assert ntob(str(page_pid)) == actual_pid
         finally:
             # Shut down the spawned process
             service.do_GET('/exit')

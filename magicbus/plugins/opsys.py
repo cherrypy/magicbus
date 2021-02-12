@@ -236,7 +236,8 @@ class PIDFile(SimplePlugin):
         if self.finalized:
             self.bus.log('PID %r already written to %r.' % (pid, self.pidfile))
         else:
-            open(self.pidfile, 'wb').write(ntob('%s' % pid, 'utf8'))
+            with open(self.pidfile, 'wb') as pid_file:
+                pid_file.write(ntob('%s' % pid, 'utf8'))
             self.bus.log('PID %r written to %r.' % (pid, self.pidfile))
             self.finalized = True
     ENTER.priority = 70
@@ -255,9 +256,12 @@ class PIDFile(SimplePlugin):
         """
         starttime = time.time()
         while timeout is None or time.time() - starttime <= timeout:
-            if os.path.exists(self.pidfile):
-                return int(open(self.pidfile, 'rb').read())
-            time.sleep(poll_interval)
+            if not os.path.exists(self.pidfile):
+                time.sleep(poll_interval)
+                continue
+
+            with open(self.pidfile, 'rb') as pid_file:
+                return int(pid_file.read())
 
     def join(self, timeout=None, poll_interval=0.1):
         """Return when the PID file does not exist, or the timeout expires."""
