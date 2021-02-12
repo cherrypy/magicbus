@@ -261,7 +261,10 @@ class TestBusMethod(object):
         # to the "main" channel.
         assert len(main_calls) > 0
 
-    @pytest.mark.skip('Fails intermittently; https://tinyurl.com/ybwwu4gz')
+    @pytest.mark.xfail(
+        reason='Fails intermittently; https://tinyurl.com/ybwwu4gz',
+        strict=False,  # Because it's flaky
+    )
     def test_start_with_callback(self):
         b = ProcessBus()
         self.log(b)
