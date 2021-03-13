@@ -3,6 +3,8 @@ thismodule = os.path.abspath(__file__)
 import sys
 import time
 
+import pytest
+
 from magicbus import bus
 from magicbus.plugins import loggers, opsys, signalhandler
 from magicbus.test import Process
