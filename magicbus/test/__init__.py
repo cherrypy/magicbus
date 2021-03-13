@@ -5,10 +5,14 @@ Run 'tox' to exercise all tests.
 
 from magicbus.compat import HTTPServer, HTTPConnection, HTTPHandler
 import os
-import pty
 from subprocess import Popen
 import threading
 import time
+
+try:
+    import pty
+except ImportError:
+    pty = None
 
 from magicbus.plugins import SimplePlugin
 
@@ -26,19 +30,23 @@ class Process(object):
         cwd = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
         env = os.environ.copy()
         env['PYTHONPATH'] = cwd
+        popen_kwargs = {}
         # NOTE: Openning a pseudo-terminal to interact with subprocess
         # NOTE: is necessary because `pytest` captures stdin unless `-s`
         # NOTE: is used and it's impossible to disable this with
         # NOTE: `capsys` because it only unpatches stdout+stderr but not
         # NOTE: stdin.
-        master_fd, self._pty_stdin = pty.openpty()
-        self.process = Popen(
-            self.args, env=env,
-            # Ref: https://stackoverflow.com/a/43012138/595220
-            preexec_fn=os.setsid, stdin=self._pty_stdin,
-            stdout=master_fd, stderr=master_fd,  # both needed for TTY
-        )
-        os.close(master_fd)  # Only needed to spawn the process
+        if pty is not None:  # NOTE: It's probably Windows
+            master_fd, self._pty_stdin = pty.openpty()
+            popen_kwargs = {
+                # Ref: https://stackoverflow.com/a/43012138/595220
+                'preexec_fn': os.setsid, 'stdin': self._pty_stdin,
+                # stdout and stderr are both needed for TTY
+                'stdout': master_fd, 'stderr': master_fd,
+            }
+        self.process = Popen(self.args, env=env, **popen_kwargs)
+        if pty is not None:
+            os.close(master_fd)  # Only needed to spawn the process
         self.process.poll()  # W/o this the subprocess doesn't see a TTY
 
     def stop(self):
