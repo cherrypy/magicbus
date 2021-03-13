@@ -69,6 +69,11 @@ class TestSignalHandling(object):
         kill(new_pid, SIGTERM)
         pidfile.join()
 
+    @pytest.mark.xfail(
+        sys.platform == 'win32',
+        reason='The non-daemonized process cannot detect the TTY on Windows for some reason',
+        run=False,
+    )
     def test_SIGTERM_tty(self):
         # SIGTERM should shut down the server whether daemonized or not.
         try:
