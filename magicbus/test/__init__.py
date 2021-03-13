@@ -5,7 +5,7 @@ Run 'tox' to exercise all tests.
 
 from magicbus.compat import HTTPServer, HTTPConnection, HTTPHandler
 import os
-from subprocess import DEVNULL, Popen
+from subprocess import Popen
 import threading
 import time
 
@@ -13,6 +13,10 @@ try:
     import pty
 except ImportError:
     pty = None
+try:
+    from subprocess import DEVNULL
+except ImportError:
+    DEVNULL = open(os.devnull, 'w')
 
 from magicbus.plugins import SimplePlugin
 
