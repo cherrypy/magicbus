@@ -14,6 +14,11 @@ pidfile = opsys.PIDFile(bus, os.path.join(thismodule + '.pid'))
 
 class TestSignalHandling(object):
 
+    @pytest.mark.xfail(
+        sys.platform == 'win32',
+        reason='The non-daemonized process cannot detect the TTY on Windows for some reason',
+        run=False,
+    )
     def test_SIGHUP_tty(self):
         # When not daemonized, SIGHUP should exit the process.
         try:
