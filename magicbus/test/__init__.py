@@ -5,6 +5,7 @@ Run 'tox' to exercise all tests.
 
 from magicbus.compat import HTTPServer, HTTPConnection, HTTPHandler
 import os
+import pty
 from subprocess import Popen
 import threading
 import time
@@ -17,6 +18,7 @@ class Process(object):
     def __init__(self, args):
         self.args = args
         self.process = None
+        self._pty_stdin = None
 
     def start(self):
         # Exceptions in the child will be re-raised in the parent,
@@ -24,14 +26,33 @@ class Process(object):
         cwd = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
         env = os.environ.copy()
         env['PYTHONPATH'] = cwd
-        self.process = Popen(self.args, env=env)
+        # NOTE: Openning a pseudo-terminal to interact with subprocess
+        # NOTE: is necessary because `pytest` captures stdin unless `-s`
+        # NOTE: is used and it's impossible to disable this with
+        # NOTE: `capsys` because it only unpatches stdout+stderr but not
+        # NOTE: stdin.
+        master_fd, self._pty_stdin = pty.openpty()
+        self.process = Popen(
+            self.args, env=env,
+            # Ref: https://stackoverflow.com/a/43012138/595220
+            preexec_fn=os.setsid, stdin=self._pty_stdin,
+            stdout=master_fd, stderr=master_fd,  # both needed for TTY
+        )
+        os.close(master_fd)  # Only needed to spawn the process
+        self.process.poll()  # W/o this the subprocess doesn't see a TTY
 
     def stop(self):
         if self.process is not None:
             self.process.kill()
+        if self._pty_stdin is not None:
+            os.close(self._pty_stdin)
 
     def join(self):
         return self.process.wait()
+
+    def __del__(self):
+        if self._pty_stdin is not None:
+            os.close(self._pty_stdin)
 
 
 class WebServer(HTTPServer):
