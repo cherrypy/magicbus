@@ -75,14 +75,15 @@ jobs:
             '-p no:warnings' || ''
         }}
       PY_COLORS: 1
-      TOXENV: >-
-        ${{
-            (
-                contains(matrix.python-version, 'pypy') &&
-                matrix.python-version
-            ) ||
-            'python'
-        }}
+      TOXENV: python
+      #TOXENV: >-
+      #  ${{
+      #      (
+      #          contains(matrix.python-version, 'pypy') &&
+      #          matrix.python-version
+      #      ) ||
+      #      'python'
+      #  }}
       TOX_PARALLEL_NO_SPINNER: 1
 
     steps:
