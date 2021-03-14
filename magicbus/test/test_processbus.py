@@ -88,8 +88,10 @@ class TestBusMethod(object):
         self.level = level
 
         def logit(msg_, level):
-            if level >= self.level:
-                self._log_entries.append(msg_)
+            if level < self.level:
+                return
+            print(msg_)
+            self._log_entries.append(msg_)
         bus.subscribe('log', logit)
 
     def assertLog(self, entries):
