@@ -208,9 +208,15 @@ class TestBusMethod(object):
             threading.Thread(target=f, args=(desired_state_,)).start()
             b.wait(states_to_wait_for)
 
+            actual_state = b.state
             # The wait method MUST wait for the given state(s).
-            if b.state not in states_to_wait_for:
-                pytest.fail('State %r not in %r' % (b.state, states_to_wait_for))
+            assert actual_state in states_to_wait_for, (
+                'State {actual_state!r} not in {expected_states!r}'.
+                format(
+                    actual_state=actual_state,
+                    expected_states=states_to_wait_for,
+                )
+            )
 
     def test_block(self):
         b = ProcessBus()
@@ -307,8 +313,9 @@ class TestBusMethod(object):
         except NameError:
             b.log('You are lost and gone forever', traceback=True)
             lastmsg = self._log_entries[-1]
-            if 'Traceback' not in lastmsg or 'NameError' not in lastmsg:
-                pytest.fail('Last log message %r did not contain '
-                          'the expected traceback.' % lastmsg)
+            assert 'Traceback' in lastmsg and 'NameError' in lastmsg, (
+                'Last log message {msg!r} did not contain '
+                'the expected traceback.'.format(msg=lastmsg)
+            )
         else:
             pytest.fail('NameError was not raised as expected.')
