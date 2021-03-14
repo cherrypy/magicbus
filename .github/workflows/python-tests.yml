@@ -165,6 +165,14 @@ jobs:
         --parallel auto
         --parallel-live
         -vv
+    - name: Dump test logs on failure
+      if: failure()
+      run: |
+        for log in magicbus/test/*.log
+        do
+            echo Dumping "'${log}'"...
+            cat "${log}"
+        done
 
   publish:
     needs:
