@@ -211,10 +211,12 @@ class TestBusMethod(object):
             actual_state = b.state
             # The wait method MUST wait for the given state(s).
             assert actual_state in states_to_wait_for, (
-                'State {actual_state!r} not in {expected_states!r}'.
+                'State {actual_state!r} not in {expected_states!r}.\n'
+                'Log entries: {logs!r}'.
                 format(
                     actual_state=actual_state,
                     expected_states=states_to_wait_for,
+                    logs=self._log_entries,
                 )
             )
 
