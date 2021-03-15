@@ -1,11 +1,30 @@
 [build-system]
 requires = [
-    # Essentials
-    "setuptools>=34.4",
-    "wheel",
+	# Essentials
+	"setuptools>=42",
+	"wheel",
 
-    # Plugins
-    "setuptools_scm>=1.15",
-    "setuptools_scm_git_archive>=1.0",
+	# Plugins
+	"setuptools_scm[toml]>=3.4.1",
+	"setuptools_scm_git_archive>=1.0",
 ]
 build-backend = "setuptools.build_meta"
+
+[tool.black]
+skip-string-normalization = true
+
+[tool.setuptools_scm]
+
+# jaraco/skeleton#22
+[tool.jaraco.pytest.plugins.black]
+addopts = "--black"
+
+# jaraco/skeleton#22
+[tool.jaraco.pytest.plugins.mypy]
+addopts = "--mypy"
+
+[tool.jaraco.pytest.plugins.flake8]
+addopts = "--flake8"
+
+[tool.jaraco.pytest.plugins.cov]
+addopts = "--cov"
