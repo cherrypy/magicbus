@@ -57,10 +57,10 @@ def test_daemonize():
     # Wait until here to test the exit code because we want to ensure
     # that we wait for the daemon to finish running before we fail.
     p.process.wait()
-    if p.process.returncode != 0:
-        raise AssertionError(
-            'Daemonized parent process returned exit code %s.' %
-            p.process.returncode)
+    assert p.process.returncode == 0, (
+        'Daemonized parent process returned exit code {rc!s}.'.
+        format(rc=p.process.returncode)
+    )
 
 
 if __name__ == '__main__':
