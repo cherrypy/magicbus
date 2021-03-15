@@ -200,6 +200,7 @@ jobs:
       timeout-minutes: 1
     - name: Dump test logs on failure
       if: failure()
+      shell: bash
       run: |
         for log in magicbus/test/*.log
         do
