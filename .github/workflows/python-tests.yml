@@ -64,6 +64,7 @@ jobs:
           && true
           || false
       }}
+    timeout-minutes: 6  # NOTE: default is 360 (6h)
 
     env:
       PYTEST_ADDOPTS: >-
@@ -142,6 +143,19 @@ jobs:
         pip install
         --upgrade
         tox
+      # macOS-latest + CPython completes in 4s-1m26s
+      # macOS-11.0 + CPython completes in 3s-18s
+      # ubuntu-16.04 + CPython completes in 2s-8s
+      # ubuntu-16.04 + PyPy completes in 5s-16s
+      # ubuntu-18.04 + CPython completes in 3s-6s
+      # ubuntu-18.04 + PyPy completes in 4s-14s
+      # ubuntu-20.04 + CPython completes in 3s-8s
+      # ubuntu-20.04 + PyPy completes in 10s-15s
+      # windows-latest + CPython completes in 5s-25s
+      # windows-latest + PyPy completes in 22s-50s
+      # windows-2016 + CPython completes in 7s-24s
+      # windows-2016 + PyPy completes in 22s-41s
+      timeout-minutes: 2
     - name: 'Initialize tox envs: ${{ matrix.env.TOXENV }}'
       run: >-
         python -m
@@ -151,6 +165,19 @@ jobs:
         -vv
         --skip-missing-interpreters false
         --notest
+      # macOS-latest + CPython completes in 11s-1m40s
+      # macOS-11.0 + CPython completes in 14s-18s
+      # ubuntu-16.04 + CPython completes in 9s-16s
+      # ubuntu-16.04 + PyPy completes in 14s-21s
+      # ubuntu-18.04 + CPython completes in 9s-15s
+      # ubuntu-18.04 + PyPy completes in 16s-24s
+      # ubuntu-20.04 + CPython completes in 10s-12s
+      # ubuntu-20.04 + PyPy completes in 16s-24s
+      # windows-latest + CPython completes in 17s-31s
+      # windows-latest + PyPy completes in 37s-44s
+      # windows-2016 + CPython completes in 18s-26s
+      # windows-2016 + PyPy completes in 37s-49s
+      timeout-minutes: 2
     - name: Test with tox
       run: >-
         python -m
@@ -158,6 +185,19 @@ jobs:
         --parallel auto
         --parallel-live
         -vv
+      # macOS-latest + CPython completes in 9-15s
+      # macOS-11.0 + CPython completes in 8s-12s
+      # ubuntu-16.04 + CPython completes in 8s-13s
+      # ubuntu-16.04 + PyPy completes in 13s-16s
+      # ubuntu-18.04 + CPython completes in 8s-13s
+      # ubuntu-18.04 + PyPy completes in 13s-15s
+      # ubuntu-20.04 + CPython completes in 8s-14s
+      # ubuntu-20.04 + PyPy completes in 13s-16s
+      # windows-latest + CPython completes in 7s-9s
+      # windows-latest + PyPy completes in 13s-24s
+      # windows-2016 + CPython completes in 7s-11s
+      # windows-2016 + PyPy completes in 13s-20s
+      timeout-minutes: 1
     - name: Dump test logs on failure
       if: failure()
       run: |
