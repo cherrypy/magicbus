@@ -3,6 +3,8 @@ import os
 thismodule = os.path.abspath(__file__)
 import sys
 
+import pytest
+
 from magicbus import bus
 from magicbus.plugins import opsys
 from magicbus.test import Process, WebAdapter, WebService
@@ -31,10 +33,8 @@ class Handler(WebHandler):
 service = WebService(handler_class=Handler)
 
 
+@pytest.mark.skipif(os.name != 'posix', reason='not on POSIX')
 def test_daemonize():
-    if os.name not in ['posix']:
-        return 'skipped (not on posix)'
-
     # Spawn the process and wait, when this returns, the original process
     # is finished.  If it daemonized properly, we should still be able
     # to access pages.
