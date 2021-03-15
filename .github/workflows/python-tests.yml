@@ -25,12 +25,13 @@ jobs:
         python-version:
         - 3.9
         - 2.7
-        - pypy3
+        - pypy-3.7
         - 3.8
         - 3.7
         - 3.6
         - 3.5
-        - pypy2
+        - pypy-2.7
+        - pypy-3.6
         - 3.10.0-alpha - 3.10.0
         os:
         - ubuntu-20.04
@@ -45,13 +46,17 @@ jobs:
         # NOTE: needs openssl headers that aren't present at the moment.
         # TODO: Remove the exclusions once this is addressed.
         - os: macOS-11.0
-          python-version: pypy2
+          python-version: pypy-2.7
         - os: macOS-latest
-          python-version: pypy2
+          python-version: pypy-2.7
         - os: macOS-11.0
-          python-version: pypy3
+          python-version: pypy-3.6
         - os: macOS-latest
-          python-version: pypy3
+          python-version: pypy-3.6
+        - os: macOS-11.0
+          python-version: pypy-3.7
+        - os: macOS-latest
+          python-version: pypy-3.7
 
     continue-on-error: >-
       ${{
@@ -64,20 +69,13 @@ jobs:
       PYTEST_ADDOPTS: >-
         ${{
             (
-                matrix.python-version == 'pypy2' &&
+                matrix.python-version == 'pypy-2.7' &&
                 startsWith(matrix.os, 'ubuntu-')
             ) &&
             '-p no:warnings' || ''
         }}
       PY_COLORS: 1
-      TOXENV: >-
-        ${{
-            (
-                contains(matrix.python-version, 'pypy') &&
-                matrix.python-version
-            ) ||
-            'python'
-        }}
+      TOXENV: python
       TOX_PARALLEL_NO_SPINNER: 1
 
     steps:
