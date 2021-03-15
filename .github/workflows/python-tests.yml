@@ -186,7 +186,7 @@ jobs:
         --parallel-live
         -vv
       # macOS-latest + CPython completes in 9-15s
-      # macOS-11.0 + CPython completes in 8s-12s
+      # macOS-11.0 + CPython completes in 8s-1m13s
       # ubuntu-16.04 + CPython completes in 8s-13s
       # ubuntu-16.04 + PyPy completes in 13s-16s
       # ubuntu-18.04 + CPython completes in 8s-13s
@@ -197,7 +197,7 @@ jobs:
       # windows-latest + PyPy completes in 13s-24s
       # windows-2016 + CPython completes in 7s-11s
       # windows-2016 + PyPy completes in 13s-20s
-      timeout-minutes: 1
+      timeout-minutes: 2
     - name: Dump test logs on failure
       if: failure()
       shell: bash
