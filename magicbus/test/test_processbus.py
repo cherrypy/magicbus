@@ -271,8 +271,12 @@ class TestBusMethod:
         f_thread = threading.Thread(target=f, name='f')
         f_thread.start()
         threading.Thread(target=g, name='g').start()
-        threads = [t for t in threading.enumerate() if not t.daemon]
-        assert len(threads) == 3
+
+        spawned_threads = [
+            t for t in threading.enumerate()
+            if t.name in {'f', 'g'}
+        ]
+        assert all(t.is_alive() for t in spawned_threads)
 
         b.block()
         f_thread.join()
@@ -281,21 +285,20 @@ class TestBusMethod:
         assert b.state == 'EXITED'
         # The block method MUST wait for ALL non-main, non-daemon threads to
         # finish.
-        threads = [t for t in threading.enumerate() if not t.daemon]
-        assert len(threads) == 1
+        assert all(not t.is_alive() for t in spawned_threads)
         # The last message will mention an indeterminable thread name; ignore
         # it
-        assert (
-            [entry for entry in self._log_entries
-             if not entry.startswith('Publishing')
-             and not entry.startswith('Waiting')] ==
-            [
-                'Bus state: ENTER',
-                'Bus state: IDLE',
-                'Bus state: EXIT',
-                'Bus state: EXITED'
-            ]
-        )
+        actual_state_changes = [
+            entry for entry in self._log_entries
+            if not entry.startswith(('Publishing', 'Waiting'))
+        ]
+        expected_state_change_order = [
+            'Bus state: ENTER',
+            'Bus state: IDLE',
+            'Bus state: EXIT',
+            'Bus state: EXITED',
+        ]
+        assert actual_state_changes == expected_state_change_order
 
         # While the bus was blocked, it should have published periodically
         # to the "main" channel.
