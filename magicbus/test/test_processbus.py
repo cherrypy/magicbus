@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import functools
 import sys
 import threading
@@ -9,11 +11,14 @@ from magicbus.base import Bus, ChannelFailures
 from magicbus.process import ProcessBus
 
 
+__metaclass__ = type
+
+
 msg = 'Listener %d on channel %s: %s.'
 print_to_stderr = functools.partial(print, file=sys.stderr)
 
 
-class TestPublishSubscribe(object):
+class TestPublishSubscribe:
 
     def get_listener(self, channel, index):
         def listener(*args):
@@ -84,7 +89,7 @@ class TestPublishSubscribe(object):
         assert self.responses == expected
 
 
-class TestBusMethod(object):
+class TestBusMethod:
 
     def log(self, bus, level=10):
         self._log_entries = []
