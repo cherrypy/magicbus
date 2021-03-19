@@ -223,7 +223,11 @@ class TestBusMethod(object):
             ('RUN', ['START', 'RUN']),
             ('EXITED', ['EXITED'])
         ]:
-            threading.Thread(target=f, args=(desired_state_,)).start()
+            threading.Thread(
+                target=f, args=(desired_state_,),
+                name='[test_wait] Transitioning to {state!s}'.
+                format(state=desired_state_),
+            ).start()
             b.wait(states_to_wait_for)
 
             actual_state = b.state
