@@ -30,6 +30,9 @@ class StreamLogger(SimplePlugin):
             if self.encoding is not None:
                 if isinstance(complete_msg, unicodestr):
                     complete_msg = complete_msg.encode(self.encoding)
+            else:
+                if not isinstance(complete_msg, unicodestr):
+                    complete_msg = complete_msg.decode("utf-8")
 
             self.stream.write(complete_msg)
             self.stream.flush()
@@ -37,13 +40,13 @@ class StreamLogger(SimplePlugin):
 
 class StdoutLogger(StreamLogger):
 
-    def __init__(self, bus, level=None, format=None, encoding='utf-8'):
+    def __init__(self, bus, level=None, format=None, encoding=None):
         StreamLogger.__init__(self, bus, sys.stdout, level, format, encoding)
 
 
 class StderrLogger(StreamLogger):
 
-    def __init__(self, bus, level=None, format=None, encoding='utf-8'):
+    def __init__(self, bus, level=None, format=None, encoding=None):
         StreamLogger.__init__(self, bus, sys.stderr, level, format, encoding)
 
 
