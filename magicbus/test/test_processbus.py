@@ -1,3 +1,5 @@
+import functools
+import sys
 import threading
 import time
 
@@ -8,6 +10,7 @@ from magicbus.process import ProcessBus
 
 
 msg = 'Listener %d on channel %s: %s.'
+print_to_stderr = functools.partial(print, file=sys.stderr)
 
 
 class TestPublishSubscribe(object):
@@ -91,6 +94,10 @@ class TestBusMethod(object):
             if level >= self.level:
                 self._log_entries.append(msg_)
         bus.subscribe('log', logit)
+
+        # NOTE: Also print to stderr so that pytest would
+        # NOTE: dump it to screen on failure.
+        bus.subscribe('log', print_to_stderr)
 
     def assertLog(self, entries):
         assert self._log_entries == entries
