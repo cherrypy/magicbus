@@ -206,6 +206,7 @@ class TestBusMethod(object):
         os.write(write_fd, b'1')
         OSError: [Errno 22] Invalid argument
         """,
+        raises=AssertionError,
         strict=False,  # Because it's flaky
     )
     def test_wait(self):
