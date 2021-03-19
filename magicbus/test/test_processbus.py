@@ -242,6 +242,11 @@ class TestBusMethod(object):
                 )
             )
 
+        assert not any(
+            t.is_alive() and t.name.startswith('[test_wait] ')
+            for t in threading.enumerate()
+        ), 'Post condition failed: some test threads are still alive'
+
     def test_block(self):
         b = ProcessBus()
         self.log(b)
