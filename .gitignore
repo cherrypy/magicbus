@@ -166,7 +166,7 @@ ENV/
 .project
 .pydevproject
 
-# test results in junit format for Appveyor
+# test results in junit format
 /junit-test-results.xml
 
 # coverage results
