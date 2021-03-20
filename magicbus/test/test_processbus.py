@@ -286,6 +286,15 @@ class TestBusMethod:
         # The block method MUST wait for ALL non-main, non-daemon threads to
         # finish.
         assert all(not t.is_alive() for t in spawned_threads)
+
+
+        # NOTE: While the state was confirmed as EXITED, it may not
+        # NOTE: appear in the log immediatelly so let's wait for a bit.
+        for _ in range(6):
+            if 'Bus state: EXITED' in self._log_entries:
+                break
+            time.sleep(0.2)
+
         # The last message will mention an indeterminable thread name; ignore
         # it
         actual_state_changes = [
