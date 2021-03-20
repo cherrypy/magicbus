@@ -197,7 +197,7 @@ jobs:
       # windows-latest + PyPy completes in 13s-24s
       # windows-2016 + CPython completes in 7s-11s
       # windows-2016 + PyPy completes in 13s-20s
-      timeout-minutes: 2
+      timeout-minutes: 1
     - name: Dump test logs on failure
       if: failure()
       shell: bash
