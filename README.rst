@@ -10,6 +10,10 @@
 .. image:: https://img.shields.io/travis/cherrypy/magicbus/master.svg
    :target: http://travis-ci.org/cherrypy/magicbus
 
+.. image:: https://img.shields.io/github/workflow/status/cherrypy/magicbus/Test%20suite/main?label=GitHub%20Actions%20%5Btests%5D&logo=github
+   :alt: GitHub Workflow Status (Test suite/main)
+   :target: https://github.com/cherrypy/magicbus/actions?query=workflow%3A%22Test+suite%22+branch%3Amain
+
 The Process Bus is a publish/subscribe architecture that
 loosely connects components with services.
 

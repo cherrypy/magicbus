@@ -29,6 +29,9 @@ params = dict(
         'Tidelift: funding':
         'https://tidelift.com/subscription/pkg/pypi-magicbus'
         '?utm_source=pypi-magicbus&utm_medium=referral&utm_campaign=pypi',
+        'CI: GitHub':
+        'https://github.com/cherrypy/magicbus/actions?'
+        'query=workflow%3A%22Test+suite%22+branch%3Amain',
     },
     packages=setuptools.find_packages(),
     include_package_data=True,
