@@ -247,6 +247,17 @@ class TestBusMethod:
                 )
             )
 
+
+        # NOTE: While the state was confirmed, the threads may need a bit of
+        # NOTE: time to die. So let's wait a little.
+        for _ in range(6):
+            if not any(
+                    t.is_alive() and t.name.startswith('[test_wait] ')
+                    for t in threading.enumerate()
+            ):
+                break
+            time.sleep(0.2)
+
         assert not any(
             t.is_alive() and t.name.startswith('[test_wait] ')
             for t in threading.enumerate()
