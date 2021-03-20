@@ -10,6 +10,7 @@ messaging to accomplish all this. Frameworks and site containers
 are free to define their own channels. If a message is sent to a
 channel that has not been defined or has no listeners, there is no effect.
 """
+import errno
 import os
 import random
 try:
@@ -202,7 +203,23 @@ class Bus(object):
             # Write to any pipes created by threads calling self.wait().
             # Use list() to avoid "Set changed size during iteration" errors.
             for read_fd, write_fd in list(self._state_transition_pipes):
-                os.write(write_fd, b'1')
+                try:
+                    os.write(write_fd, b'1')
+                except OSError as os_err_exc:
+                    # Ref: https://github.com/cherrypy/magicbus/issues/16
+                    #
+                    # NOTE: This is supposedly happening when `self.wait()`
+                    # NOTE: closes the pipe on disposal.
+                    if os_err_exc.errno not in {
+                        # NOTE: This has been noticed in CI under both
+                        # NOTE: Ubuntu and Windows:
+                        errno.EBADF,
+
+                        # NOTE: This behavior is currently only observed
+                        # NOTE: under Windows in GHA CI/CD workflows:
+                        errno.EINVAL,
+                    }:
+                        raise
 
             # Note: logging here means 1) the initial transition
             # will not be logged if loggers are set up in the initial
