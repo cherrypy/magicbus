@@ -315,6 +315,7 @@ class TestBusMethod:
 
     @pytest.mark.xfail(
         reason='Fails intermittently; https://tinyurl.com/ybwwu4gz',
+        raises=AssertionError,
         strict=False,  # Because it's flaky
     )
     def test_start_with_callback(self):
