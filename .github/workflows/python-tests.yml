@@ -209,6 +209,7 @@ jobs:
         done
 
   publish:
+    name: Validate metadata and optionally publish 🐍📦 to PyPI
     needs:
     - tests
     runs-on: ${{ matrix.os }}
