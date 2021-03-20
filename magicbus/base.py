@@ -352,8 +352,10 @@ class Bus(object):
                     self.publish(channel)
             finally:
                 self._state_transition_pipes.discard(pipe)
-                os.close(read_fd)
+                # NOTE: Closing the write file descriptor first
+                # NOTE: to prevent "Broken pipe" in `self._transition()`.
                 os.close(write_fd)
+                os.close(read_fd)
 
         # From http://psyco.sourceforge.net/psycoguide/bugs.html:
         # "The compiled machine code does not include the regular polling
