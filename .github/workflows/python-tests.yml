@@ -187,17 +187,17 @@ jobs:
         -vv
       # macOS-latest + CPython completes in 9-15s
       # macOS-11.0 + CPython completes in 8s-12s
-      # ubuntu-16.04 + CPython completes in 8s-2m12s
+      # ubuntu-16.04 + CPython completes in 8s-13s
       # ubuntu-16.04 + PyPy completes in 13s-16s
-      # ubuntu-18.04 + CPython completes in 8s-2m12s
+      # ubuntu-18.04 + CPython completes in 8s-13s
       # ubuntu-18.04 + PyPy completes in 13s-15s
-      # ubuntu-20.04 + CPython completes in 8s-2m12s
+      # ubuntu-20.04 + CPython completes in 8s-14s
       # ubuntu-20.04 + PyPy completes in 13s-16s
       # windows-latest + CPython completes in 7s-9s
       # windows-latest + PyPy completes in 13s-24s
       # windows-2016 + CPython completes in 7s-11s
       # windows-2016 + PyPy completes in 13s-20s
-      timeout-minutes: 3
+      timeout-minutes: 2
     - name: Dump test logs on failure
       if: failure()
       shell: bash
