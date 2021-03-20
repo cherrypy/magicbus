@@ -203,17 +203,6 @@ class TestBusMethod:
             'Bus state: EXITED'
         ])
 
-    @pytest.mark.xfail(
-        reason=r"""Fails intermittently with
-        Traceback (most recent call last):
-        File "D:\a\magicbus\magicbus\magicbus\base.py",
-             line 205, in _transition
-        os.write(write_fd, b'1')
-        OSError: [Errno 22] Invalid argument
-        """,
-        raises=AssertionError,
-        strict=False,  # Because it's flaky
-    )
     def test_wait(self):
         b = ProcessBus()
         self.log(b)
