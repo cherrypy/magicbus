@@ -18,20 +18,18 @@ class Handler(WebHandler):
             self.respond(status=404)
 
 
-class TestServers(object):
+def test_keyboard_interrupt():
+    bus = ProcessBus()
 
-    def test_keyboard_interrupt(self):
-        bus = ProcessBus()
+    Handler.bus = bus
+    service = WebService(address=('127.0.0.1', 38002),
+                         handler_class=Handler)
+    adapter = servers.ServerPlugin(bus, service, service.address)
+    adapter.subscribe()
 
-        Handler.bus = bus
-        service = WebService(address=('127.0.0.1', 38002),
-                             handler_class=Handler)
-        adapter = servers.ServerPlugin(bus, service, service.address)
-        adapter.subscribe()
-
-        # Raise a keyboard interrupt in the HTTP server's main thread.
-        bus.transition('RUN')
-        resp = service.do_GET('/ctrlc')
-        assert resp.status == 200
-        bus.block()
-        assert bus.state == 'EXITED'
+    # Raise a keyboard interrupt in the HTTP server's main thread.
+    bus.transition('RUN')
+    resp = service.do_GET('/ctrlc')
+    assert resp.status == 200
+    bus.block()
+    assert bus.state == 'EXITED'
