@@ -64,7 +64,7 @@ jobs:
           && true
           || false
       }}
-    timeout-minutes: 6  # NOTE: default is 360 (6h)
+    timeout-minutes: 7  # NOTE: default is 360 (6h)
 
     env:
       PYTEST_ADDOPTS: >-
