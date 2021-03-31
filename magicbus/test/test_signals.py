@@ -46,7 +46,7 @@ def logfile(request):
     test_name = request.node.originalname
     path = os.path.join(
         os.path.dirname(thismodule),
-        '.'.join((__name__, test_name, 'log')),
+        '.'.join((__name__ or 'test_signals', test_name, 'log')),
     )
 
     try:
@@ -60,7 +60,7 @@ def logfile(request):
 
 @pytest.fixture
 def pidfile(tmp_path):
-    pid_file_path = tmp_path / (__name__ + '.pid')
+    pid_file_path = tmp_path / (__name__ or 'test_signals' + '.pid')
     return opsys.PIDFile(bus, str(pid_file_path))
 
 
