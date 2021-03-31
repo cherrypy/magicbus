@@ -43,7 +43,7 @@ def SIGTERM(signal):
 @pytest.fixture
 def logfile(request):
     # Ref: https://stackoverflow.com/a/34732269/595220
-    test_name = request.node.originalname
+    test_name = request.node.originalname or request.node.name
     path = os.path.join(
         os.path.dirname(thismodule),
         '.'.join((__name__, test_name, 'log')),
