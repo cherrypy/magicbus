@@ -1,5 +1,6 @@
+repos:
 -   repo: git://github.com/pre-commit/pre-commit-hooks
-    sha: 5bf6c09
+    rev: 5bf6c09
     hooks:
     -   id: trailing-whitespace
     -   id: flake8
@@ -30,17 +31,17 @@
     -   id: requirements-txt-fixer
 
 -   repo: git://github.com/FalconSocial/pre-commit-mirrors-pep257
-    sha: f464d46
+    rev: v0.3.3
     hooks:
     -   id: pep257
         exclude: magicbus/test
 
 -   repo: git://github.com/Lucas-C/pre-commit-hooks
-    sha: 1e30aa4
+    rev: v1.1.12
     hooks:
     -   id: remove-tabs
 
 -   repo: git://github.com/Lucas-C/pre-commit-hooks-lxml
-    sha: 44f1a42
+    rev: v1.1.0
     hooks:
     -   id: forbid-html-img-without-alt-text
