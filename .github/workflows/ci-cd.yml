@@ -285,6 +285,4 @@ jobs:
       if: >-  # "create" workflows run separately from "push" & "pull_request"
         github.event_name == 'create' &&
         github.event.ref_type == 'tag'
-      uses: pypa/gh-action-pypi-publish@master
-      with:
-        password: ${{ secrets.PYPI_TOKEN }}
+      uses: pypa/gh-action-pypi-publish@release/v1
