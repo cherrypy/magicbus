@@ -14,6 +14,9 @@ on:
   - cron: 1 0 * * *  # Run daily at 0:01 UTC
 
 jobs:
+  lint:
+    uses: ./.github/workflows/reusable-linters.yml
+
   tests:
     if: >-  # https://twitter.com/webKnjaZ/status/1308803017001652225
       github.event_name != 'create' ||
