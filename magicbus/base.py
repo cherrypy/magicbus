@@ -15,12 +15,13 @@ import os
 import random
 try:
     import select
+except ImportError:
+    select = None
+else:
     try:
         epoll = select.epoll
     except AttributeError:
         epoll = None
-except ImportError:
-    select = None
 import sys
 import time
 import traceback as _traceback
