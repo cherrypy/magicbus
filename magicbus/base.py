@@ -17,6 +17,11 @@ try:
     import select
 except ImportError:
     select = None
+else:
+    try:
+        epoll = select.epoll
+    except AttributeError:
+        epoll = None
 import sys
 import time
 import traceback as _traceback
@@ -333,14 +338,20 @@ class Bus(object):
             pipe = os.pipe()
             read_fd, write_fd = pipe
             self._state_transition_pipes.add(pipe)
+            if epoll:
+                poller = epoll(1)
+                poller.register(read_fd, select.EPOLLIN)
 
         def _wait():
             try:
                 while self.state not in _states_to_wait_for:
                     if select:
                         try:
-                            r, w, x = select.select([read_fd], [], [], interval)
-                            if r:
+                            if epoll:
+                                readers = poller.poll(interval)
+                            else:
+                                readers = select.select([read_fd], [], [], interval)[0]
+                            if readers:
                                 os.read(read_fd, 1)
                         except (select.error, OSError):
                             # Interrupted due to a signal (being handled by some
@@ -352,6 +363,8 @@ class Bus(object):
                     self.publish(channel)
             finally:
                 self._state_transition_pipes.discard(pipe)
+                if epoll:
+                    poller.close()
                 # NOTE: Closing the write file descriptor first
                 # NOTE: to prevent "Broken pipe" in `self._transition()`.
                 os.close(write_fd)
