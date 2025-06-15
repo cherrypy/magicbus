@@ -44,7 +44,6 @@ params = dict(
     ],
     extras_require={
         'testing': [
-            'collective.checkdocs',
             'pytest',
             'pytest-xdist',
         ],
