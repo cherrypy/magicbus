@@ -27,14 +27,6 @@ jobs:
       matrix:
         python-version:
         - 3.9
-        - 2.7
-        - pypy-3.7
-        - 3.8
-        - 3.7
-        - 3.6
-        - 3.5
-        - pypy-2.7
-        - pypy-3.6
         - 3.10.0-alpha - 3.10.0
         os:
         - ubuntu-20.04
@@ -44,22 +36,6 @@ jobs:
         - macOS-latest
         - windows-latest
         - windows-2016
-        exclude:
-        # NOTE: macOS PyPy jobs are excluded because installing cryptography
-        # NOTE: needs openssl headers that aren't present at the moment.
-        # TODO: Remove the exclusions once this is addressed.
-        - os: macOS-11.0
-          python-version: pypy-2.7
-        - os: macOS-latest
-          python-version: pypy-2.7
-        - os: macOS-11.0
-          python-version: pypy-3.6
-        - os: macOS-latest
-          python-version: pypy-3.6
-        - os: macOS-11.0
-          python-version: pypy-3.7
-        - os: macOS-latest
-          python-version: pypy-3.7
 
     continue-on-error: >-
       ${{
@@ -70,14 +46,6 @@ jobs:
     timeout-minutes: 7  # NOTE: default is 360 (6h)
 
     env:
-      PYTEST_ADDOPTS: >-
-        ${{
-            (
-                matrix.python-version == 'pypy-2.7' &&
-                startsWith(matrix.os, 'ubuntu-')
-            ) &&
-            '-p no:warnings' || ''
-        }}
       PY_COLORS: 1
       TOXENV: python
       TOX_PARALLEL_NO_SPINNER: 1

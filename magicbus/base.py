@@ -54,7 +54,7 @@ class ChannelFailures(Exception):
     __nonzero__ = __bool__
 
 
-class State(object):
+class State:
 
     def __init__(self, name):
         self.name = name
@@ -63,7 +63,7 @@ class State(object):
         return 'State(%s)' % repr(self.name)
 
 
-class StateEnum(object):
+class StateEnum:
     """An object with enumerated state attributes."""
     pass
 
@@ -148,7 +148,7 @@ class Graph(dict):
         return cls(next)
 
 
-class Bus(object):
+class Bus:
     """State machine and pub/sub messenger.
 
     If the 'select' module is present (POSIX systems), then select.select()

@@ -1,7 +1,7 @@
 """Site services for use with a Bus."""
 
 
-class SimplePlugin(object):
+class SimplePlugin:
     """Plugin base class which auto-subscribes methods for known channels."""
 
     bus = None

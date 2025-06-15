@@ -4,10 +4,8 @@ import os
 import signal as _signal
 import sys
 
-from magicbus.compat import basestring
 
-
-class SignalHandler(object):
+class SignalHandler:
     """Register bus channels (and listeners) for system signals.
 
     You can modify what signals your application listens for, and what it does
@@ -105,11 +103,13 @@ class SignalHandler(object):
         If the given signal name or number is not available on the current
         platform, ValueError is raised.
         """
-        if isinstance(signal, basestring):
+        if isinstance(signal, str):
             signum = getattr(_signal, signal, None)
             if signum is None:
                 raise ValueError('No such signal: %r' % signal)
             signame = signal
+        elif isinstance(signal, bytes):
+            raise ValueError(f'Signal {signal!r} must be str, not bytes')
         else:
             try:
                 signame = self.signals[signal]

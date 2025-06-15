@@ -3,8 +3,9 @@
 Run 'tox' to exercise all tests.
 """
 
-from magicbus.compat import HTTPServer, HTTPConnection, HTTPHandler
 import os
+from http.client import HTTPConnection
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from subprocess import Popen
 import threading
 import time
@@ -21,7 +22,7 @@ except ImportError:
 from magicbus.plugins import SimplePlugin
 
 
-class Process(object):
+class Process:
 
     def __init__(self, args):
         self.args = args
@@ -80,7 +81,7 @@ class WebServer(HTTPServer):
         raise
 
 
-class WebService(object):
+class WebService:
 
     def __init__(self, address=('127.0.0.1', 8000), handler_class=None):
         self.address = address
@@ -130,10 +131,10 @@ class WebAdapter(SimplePlugin):
             time.sleep(.1)
 
 
-class WebHandler(HTTPHandler):
+class WebHandler(BaseHTTPRequestHandler):
 
     def log_request(self, code='-', size='-'):
-        HTTPHandler.log_request(self, code, size)
+        BaseHTTPRequestHandler.log_request(self, code, size)
 
     def respond(self, body=None, status=200, headers=None):
         if headers is None:
@@ -152,4 +153,4 @@ class WebHandler(HTTPHandler):
 
     def handle(self, *args, **kwargs):
         self.bus.publish('acquire_thread')
-        HTTPHandler.handle(self)
+        BaseHTTPRequestHandler.handle(self)

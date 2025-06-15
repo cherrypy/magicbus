@@ -1,5 +1,5 @@
 """Logging plugins for magicbus."""
-from magicbus.compat import ntob, unicodestr
+
 import datetime
 import sys
 
@@ -20,7 +20,7 @@ class StreamLogger(SimplePlugin):
     def log(self, msg, level):
         if self.level is None or self.level <= level:
             params = {
-                'timestamp': ntob(datetime.datetime.now().isoformat()),
+                'timestamp': datetime.datetime.now().isoformat().encode('ISO-8859-1'),
                 'bus': self.bus.id,
                 'message': msg,
                 'level': level
@@ -28,7 +28,7 @@ class StreamLogger(SimplePlugin):
             complete_msg = self.format % params
 
             if self.encoding is not None:
-                if isinstance(complete_msg, unicodestr):
+                if isinstance(complete_msg, str):
                     complete_msg = complete_msg.encode(self.encoding)
 
             self.stream.write(complete_msg)

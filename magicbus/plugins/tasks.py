@@ -7,7 +7,6 @@ import time
 import threading
 
 from magicbus.plugins import SimplePlugin
-from magicbus.compat import get_thread_ident, TimerClass
 
 # _module__file__base is used by Autoreload to make
 # absolute any filenames retrieved from sys.modules which are not
@@ -28,7 +27,7 @@ from magicbus.compat import get_thread_ident, TimerClass
 _module__file__base = os.getcwd()
 
 
-class PerpetualTimer(TimerClass):
+class PerpetualTimer(threading.Timer):
     """A responsive subclass of threading.Timer whose run() method repeats.
 
     Use this timer only when you really need a very interruptible timer;
@@ -278,7 +277,7 @@ class ThreadManager(SimplePlugin):
         If the current thread has already been seen, any 'start_thread'
         listeners will not be run again.
         """
-        thread_ident = get_thread_ident()
+        thread_ident = threading.get_ident()
         if thread_ident not in self.threads:
             # We can't just use get_ident as the thread ID
             # because some platforms reuse thread ID's.
@@ -288,7 +287,7 @@ class ThreadManager(SimplePlugin):
 
     def release_thread(self):
         """Release the current thread and run 'stop_thread' listeners."""
-        thread_ident = get_thread_ident()
+        thread_ident = threading.get_ident()
         i = self.threads.pop(thread_ident, None)
         if i is not None:
             self.bus.publish('stop_thread', i)

@@ -6,7 +6,6 @@ import threading
 import time
 
 from magicbus.plugins import SimplePlugin
-from magicbus.compat import basestring, ntob
 
 
 try:
@@ -36,12 +35,15 @@ class DropPrivileges(SimplePlugin):
 
     @uid.setter
     def uid(self, val):
+        if isinstance(val, bytes):
+            val = val.decode()
+
         if val is not None:
             if pwd is None:
                 self.bus.log('pwd module not available; ignoring uid.',
                              level=30)
                 val = None
-            elif isinstance(val, basestring):
+            elif isinstance(val, str):
                 val = pwd.getpwnam(val)[2]
         self._uid = val
 
@@ -52,12 +54,15 @@ class DropPrivileges(SimplePlugin):
 
     @gid.setter
     def gid(self, val):
+        if isinstance(val, bytes):
+            val = val.decode()
+
         if val is not None:
             if grp is None:
                 self.bus.log('grp module not available; ignoring gid.',
                              level=30)
                 val = None
-            elif isinstance(val, basestring):
+            elif isinstance(val, str):
                 val = grp.getgrnam(val)[2]
         self._gid = val
 
@@ -237,7 +242,7 @@ class PIDFile(SimplePlugin):
             self.bus.log('PID %r already written to %r.' % (pid, self.pidfile))
         else:
             with open(self.pidfile, 'wb') as pid_file:
-                pid_file.write(ntob('%s' % pid, 'utf8'))
+                pid_file.write(str(pid).encode('utf8'))
             self.bus.log('PID %r written to %r.' % (pid, self.pidfile))
             self.finalized = True
     ENTER.priority = 70

@@ -1,4 +1,3 @@
-from magicbus.compat import ntob
 import os
 thismodule = os.path.abspath(__file__)
 import sys
@@ -59,7 +58,7 @@ def test_daemonize():
         page_pid = int(resp.read())
         with open(pidfile.pidfile, 'rb') as pid_file:
             actual_pid = pid_file.read()
-        assert ntob(str(page_pid)) == actual_pid
+        assert str(page_pid).encode('ISO-8859-1') == actual_pid
     finally:
         # Shut down the spawned process
         service.do_GET('/exit')

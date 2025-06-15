@@ -88,7 +88,7 @@ import time
 import warnings
 
 
-class ServerPlugin(object):
+class ServerPlugin:
     """Bus plugin for an HTTP server.
 
     You don't have to use this plugin; you can make your own that listens on
@@ -222,7 +222,7 @@ class ServerPlugin(object):
 # ------- Wrappers for various HTTP servers for use with ServerPlugin ------- #
 # These are not plugins, so they don't use the bus states as method names.
 
-class FlupCGIServer(object):
+class FlupCGIServer:
     """Adapter for a flup.server.cgi.WSGIServer."""
 
     def __init__(self, *args, **kwargs):
@@ -245,7 +245,7 @@ class FlupCGIServer(object):
         self.ready = False
 
 
-class FlupFCGIServer(object):
+class FlupFCGIServer:
     """Adapter for a flup.server.fcgi.WSGIServer."""
 
     def __init__(self, *args, **kwargs):
@@ -289,7 +289,7 @@ class FlupFCGIServer(object):
         self.ready = False
 
 
-class FlupSCGIServer(object):
+class FlupSCGIServer:
     """Adapter for a flup.server.scgi.WSGIServer."""
 
     def __init__(self, *args, **kwargs):

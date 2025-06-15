@@ -39,7 +39,7 @@ params = dict(
         name.split('.')[:-1] if nspkg_technique == 'managed'
         else []
     ),
-    python_requires='>=2.7',
+    python_requires='>= 3.9',
     install_requires=[
     ],
     extras_require={
@@ -62,7 +62,6 @@ params = dict(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Topic :: Internet :: WWW/HTTP',
         'Topic :: Internet :: WWW/HTTP :: HTTP Servers',
