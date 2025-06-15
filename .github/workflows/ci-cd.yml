@@ -1,11 +1,10 @@
 ---
 
-name: Test suite
+name: 🧪
 
 on:
-  create:  # is used for publishing to PyPI and TestPyPI
   merge_group:
-  push:  # only publishes pushes to the main branch to TestPyPI
+  push:  # publishes to TestPyPI pushes to the main branch
     branches-ignore:
     - dependabot/**  # Dependabot always creates PRs
     - gh-readonly-queue/**  # Temporary merge queue-related GH-made branches
@@ -13,13 +12,38 @@ on:
     - maintenance/pip-tools-constraint-lockfiles-**  # Lock files through PRs
     - patchback/backports/**  # Patchback always creates PRs
     - pre-commit-ci-update-config  # pre-commit.ci always creates a PR
-    tags-ignore:
-    - >-
-      **
   pull_request:
     ignore-paths:  # changes to the cron workflow are triggered through it
     - .github/workflows/scheduled-runs.yml
   workflow_call:  # a way to embed the main tests
+  workflow_dispatch:
+    inputs:
+      release-version:
+        # github.event_name == 'workflow_dispatch'
+        # && github.event.inputs.release-version
+        description: >-
+          Target PEP440-compliant version to release.
+          Please, don't prepend `v`.
+        required: true
+        type: string
+      release-committish:
+        # github.event_name == 'workflow_dispatch'
+        # && github.event.inputs.release-committish
+        default: ''
+        description: >-
+          The commit to be released to PyPI and tagged
+          in Git as `release-version`. Normally, you
+          should keep this empty.
+        type: string
+      YOLO:
+        default: false
+        description: >-
+          Set this flag to disregard the outcome of the
+          test stage. The test results will block the
+          release otherwise. Only use this under
+          extraordinary circumstances to ignore the test
+          failures and cut the release regardless.
+        type: boolean
 
 concurrency:
   group: >-
@@ -63,264 +87,1114 @@ env:
   UPSTREAM_REPOSITORY_ID: >-
     16620685
 
+run-name: >-
+  ${{
+    github.event_name == 'workflow_dispatch'
+    && format('📦 Releasing v{0}...', github.event.inputs.release-version)
+    || ''
+  }}
+  ${{
+      github.event.pull_request.number && '🔀 PR' || ''
+  }}${{
+      !github.event.pull_request.number && '🌱 Commit' || ''
+  }}
+  ${{ github.event.pull_request.number || github.sha }}
+  triggered by: ${{ github.event_name }} of ${{
+    github.ref
+  }} ${{
+    github.ref_type
+  }}
+  (workflow run ID: ${{
+    github.run_id
+  }}; number: ${{
+    github.run_number
+  }}; attempt: ${{
+    github.run_attempt
+  }})
+
 jobs:
+  pre-setup:
+    name: ⚙️ Pre-set global build settings
+
+    runs-on: ubuntu-latest
+
+    timeout-minutes: 2  # network is slow sometimes when fetching from Git
+
+    defaults:
+      run:
+        shell: python
+
+    outputs:
+      # NOTE: These aren't env vars because the `${{ env }}` context is
+      # NOTE: inaccessible when passing inputs to reusable workflows.
+      dists-artifact-name: python-package-distributions
+      dist-version: >-
+        ${{
+            steps.request-check.outputs.release-requested == 'true'
+            && github.event.inputs.release-version
+            || steps.scm-version.outputs.dist-version
+        }}
+      is-untagged-devel: >-
+        ${{ steps.untagged-check.outputs.is-untagged-devel || false }}
+      release-requested: >-
+        ${{
+            steps.request-check.outputs.release-requested || false
+        }}
+      is-yolo-mode: >-
+        ${{
+          (
+            steps.request-check.outputs.release-requested == 'true'
+            && github.event.inputs.YOLO
+          )
+          && true || false
+        }}
+      cache-key-for-dep-files: >-
+        ${{ steps.calc-cache-key-files.outputs.cache-key-for-dep-files }}
+      git-tag: ${{ steps.git-tag.outputs.tag }}
+      sdist-artifact-name: ${{ steps.artifact-name.outputs.sdist }}
+      wheel-artifact-name: ${{ steps.artifact-name.outputs.wheel }}
+      upstream-repository-id: ${{ env.UPSTREAM_REPOSITORY_ID }}
+      publishing-to-testpypi-enabled: ${{ env.PUBLISHING_TO_TESTPYPI_ENABLED }}
+      is-debug-mode: ${{ toJSON(runner.debug == '1') }}
+      changelog-patch-name: ${{ steps.changelog-patch-name.outputs.filename }}
+      changelog-draft-name-md: >-
+        ${{ steps.changelog-draft-name.outputs.filename-base }}.md
+      changelog-draft-name-rst: >-
+        ${{ steps.changelog-draft-name.outputs.filename-base }}.rst
+
+    steps:
+    - name: Switch to using Python 3.11 by default
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.11
+    - name: >-
+        Mark the build as untagged '${{
+            github.event.repository.default_branch
+        }}' branch build
+      id: untagged-check
+      if: >-
+        github.event_name == 'push' &&
+        github.ref == format(
+          'refs/heads/{0}', github.event.repository.default_branch
+        )
+      run: |
+        from os import environ
+        from pathlib import Path
+
+        FILE_APPEND_MODE = 'a'
+
+        with Path(environ['GITHUB_OUTPUT']).open(
+                mode=FILE_APPEND_MODE,
+        ) as outputs_file:
+            print('is-untagged-devel=true', file=outputs_file)
+    - name: Mark the build as "release request"
+      id: request-check
+      if: github.event_name == 'workflow_dispatch'
+      run: |
+        from os import environ
+        from pathlib import Path
+
+        FILE_APPEND_MODE = 'a'
+
+        with Path(environ['GITHUB_OUTPUT']).open(
+                mode=FILE_APPEND_MODE,
+        ) as outputs_file:
+            print('release-requested=true', file=outputs_file)
+    - name: Check out src from Git
+      if: >-
+        steps.request-check.outputs.release-requested != 'true'
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: >-
+          ${{
+            steps.request-check.outputs.release-requested == 'true'
+            && 1 || 0
+          }}
+        ref: ${{ github.event.inputs.release-committish }}
+    - name: >-
+        Calculate dependency files' combined hash value
+        for use in the cache key
+      if: >-
+        steps.request-check.outputs.release-requested != 'true'
+      id: calc-cache-key-files
+      uses: ./.github/actions/cache-keys
+    - name: Set up pip cache
+      if: >-
+        steps.request-check.outputs.release-requested != 'true'
+      uses: re-actors/cache-python-deps@release/v1
+      with:
+        cache-key-for-dependency-files: >-
+          ${{ steps.calc-cache-key-files.outputs.cache-key-for-dep-files }}
+    - name: Drop Git tags from HEAD for non-release requests
+      if: >-
+        steps.request-check.outputs.release-requested != 'true'
+      run: >-
+        git tag --points-at HEAD
+        |
+        xargs git tag --delete
+      shell: bash
+    - name: Set up versioning prerequisites
+      if: >-
+        steps.request-check.outputs.release-requested != 'true'
+      run: >-
+        python -m
+        pip install
+        --user
+        setuptools-scm
+      shell: bash
+    - name: Set the current dist version from Git
+      if: steps.request-check.outputs.release-requested != 'true'
+      id: scm-version
+      run: |
+        from os import environ
+        from pathlib import Path
+
+        import setuptools_scm
+
+        FILE_APPEND_MODE = 'a'
+
+        ver = setuptools_scm.get_version(
+          ${{
+              steps.untagged-check.outputs.is-untagged-devel == 'true'
+              && 'local_scheme="no-local-version"' || ''
+          }}
+        )
+        with Path(environ['GITHUB_OUTPUT']).open(
+                mode=FILE_APPEND_MODE,
+        ) as outputs_file:
+            print(f'dist-version={ver}', file=outputs_file)
+            print(
+                f'dist-version-for-filenames={ver.replace("+", "-")}',
+                file=outputs_file,
+            )
+    - name: Set the target Git tag
+      id: git-tag
+      run: |
+        from os import environ
+        from pathlib import Path
+
+        FILE_APPEND_MODE = 'a'
+
+        with Path(environ['GITHUB_OUTPUT']).open(
+                mode=FILE_APPEND_MODE,
+        ) as outputs_file:
+            print(
+                "tag=v${{
+                    steps.request-check.outputs.release-requested == 'true'
+                    && github.event.inputs.release-version
+                    || steps.scm-version.outputs.dist-version
+                }}",
+                file=outputs_file,
+            )
+    - name: Set the expected dist artifact names
+      id: artifact-name
+      run: |
+        from os import environ
+        from pathlib import Path
+
+        FILE_APPEND_MODE = 'a'
+
+        whl_file_prj_base_name = '${{ env.PROJECT_NAME }}'.replace('-', '_')
+        sdist_file_prj_base_name = whl_file_prj_base_name.replace('.', '_')
+
+        with Path(environ['GITHUB_OUTPUT']).open(
+                mode=FILE_APPEND_MODE,
+        ) as outputs_file:
+            print(
+                f"sdist={sdist_file_prj_base_name !s}-${{
+                    steps.request-check.outputs.release-requested == 'true'
+                    && github.event.inputs.release-version
+                    || steps.scm-version.outputs.dist-version
+                }}.tar.gz",
+                file=outputs_file,
+            )
+            print(
+                f"wheel={whl_file_prj_base_name !s}-${{
+                    steps.request-check.outputs.release-requested == 'true'
+                    && github.event.inputs.release-version
+                    || steps.scm-version.outputs.dist-version
+                }}-py3-none-any.whl",
+                file=outputs_file,
+            )
+    - name: Set the expected changelog patch filename
+      id: changelog-patch-name
+      run: |
+        from os import environ
+        from pathlib import Path
+
+        FILE_APPEND_MODE = 'a'
+
+        with Path(environ['GITHUB_OUTPUT']).open(
+                mode=FILE_APPEND_MODE,
+        ) as outputs_file:
+            print('filename=0001-Generate-a-change-log-entry-for-v${{
+                steps.request-check.outputs.release-requested == 'true'
+                && github.event.inputs.release-version
+                || steps.scm-version.outputs.dist-version-for-filenames
+            }}.patch', file=outputs_file)
+    - name: Set the expected changelog draft filename
+      id: changelog-draft-name
+      run: |
+        from os import environ
+        from pathlib import Path
+
+        FILE_APPEND_MODE = 'a'
+
+        with Path(environ['GITHUB_OUTPUT']).open(
+                mode=FILE_APPEND_MODE,
+        ) as outputs_file:
+            print('filename-base=change-notes-v${{
+                steps.request-check.outputs.release-requested == 'true'
+                && github.event.inputs.release-version
+                || steps.scm-version.outputs.dist-version-for-filenames
+            }}', file=outputs_file)
+
+  build-changelog:
+    name: >-
+      👷📝 ${{ needs.pre-setup.outputs.git-tag }} changelog
+      [mode: ${{
+        fromJSON(needs.pre-setup.outputs.is-untagged-devel)
+        && 'nightly' || ''
+      }}${{
+        fromJSON(needs.pre-setup.outputs.release-requested)
+        && 'release' || ''
+      }}${{
+        (
+          !fromJSON(needs.pre-setup.outputs.is-untagged-devel)
+          && !fromJSON(needs.pre-setup.outputs.release-requested)
+        ) && 'test' || ''
+      }}]
+    needs:
+    - pre-setup
+    runs-on: ubuntu-latest
+
+    timeout-minutes: 2  # network is slow sometimes
+
+    env:
+      TOXENV: make-changelog
+
+    steps:
+    - name: Switch to using Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.11
+
+    - name: Grab the source from Git
+      uses: actions/checkout@v4.1.1
+      with:
+        fetch-depth: 1  # Enough for this job to generate the changelog
+        ref: ${{ github.event.inputs.release-committish }}
+
+    - name: Set up pip cache
+      uses: re-actors/cache-python-deps@release/v1
+      with:
+        cache-key-for-dependency-files: >-
+          ${{ needs.pre-setup.outputs.cache-key-for-dep-files }}
+    - name: Install tox
+      run: >-
+        python -m
+        pip install
+        --user
+        '${{ env.TOX_VERSION }}'
+
+    - name: Pre-populate the tox env
+      run: >-
+        python -m
+        tox
+        --parallel auto
+        --parallel-live
+        --skip-missing-interpreters false
+        --notest
+
+    - name: Drop Git tags from HEAD for non-tag-create events
+      if: >-
+        !fromJSON(needs.pre-setup.outputs.release-requested)
+      run: >-
+        git tag --points-at HEAD
+        |
+        xargs git tag --delete
+      shell: bash
+
+    - name: Setup git user as [bot]
+      # Refs:
+      # * https://github.community/t/github-actions-bot-email-address/17204/6
+      # * https://github.com/actions/checkout/issues/13#issuecomment-724415212
+      uses: fregante/setup-git-user@v2.0.1
+
+    - name: Generate changelog draft to a temporary file
+      run: >-
+        2>/dev/null
+        python -m
+        tox
+        --skip-missing-interpreters false
+        --skip-pkg-install
+        -qq
+        --
+        '${{ needs.pre-setup.outputs.dist-version }}'
+        --draft
+        |
+        tee
+        '${{ needs.pre-setup.outputs.changelog-draft-name-rst }}'
+      shell: bash
+    - name: Sanitize the markdown changelog version
+      run: >-
+        sed
+        -i
+        -e 's/:commit:`\([0-9a-f]\+\)`/${{
+          ''
+        }}https:\/\/github.com\/cherrypy\/${{
+          env.PROJECT_NAME
+        }}\/commit\/\1/g'
+        -e 's/:gh:`\([-.a-zA-Z0-9]\+\)`/https:\/\/github.com\/\1/g'
+        -e 's/:\(issue\|pr\):`\([0-9]\+\)`/#\2/g'
+        -e 's/:user:`\([-.a-zA-Z0-9]\+\)`/@\1/g'
+        -e 's/|project|/${{ env.PROJECT_NAME }}/g'
+        '${{ needs.pre-setup.outputs.changelog-draft-name-rst }}'
+      shell: bash
+    - name: Install pandoc via apt
+      run: sudo apt install -y pandoc
+    - name: >-
+        Convert ${{ needs.pre-setup.outputs.changelog-draft-name-rst }}
+        into ${{ needs.pre-setup.outputs.changelog-draft-name-md }}
+        with a native pandoc run
+      run: >-
+        pandoc
+        --from=rst
+        --to=gfm
+        --output='${{ needs.pre-setup.outputs.changelog-draft-name-md }}'
+        '${{ needs.pre-setup.outputs.changelog-draft-name-rst }}'
+    - name: Render the changelog draft in the GitHub Job Summary
+      run: |
+        echo "# Changelog for ${{
+            needs.pre-setup.outputs.git-tag
+        }}" >> "${GITHUB_STEP_SUMMARY}"
+        echo >> "${GITHUB_STEP_SUMMARY}"
+        echo >> "${GITHUB_STEP_SUMMARY}"
+        cat '${{
+            needs.pre-setup.outputs.changelog-draft-name-md
+        }}' >> "${GITHUB_STEP_SUMMARY}"
+      shell: bash
+    - name: Generate changelog update with tox and stage it in Git
+      run: >-
+        python -m
+        tox
+        --parallel auto
+        --parallel-live
+        --skip-missing-interpreters false
+        --skip-pkg-install
+        --
+        '${{ needs.pre-setup.outputs.dist-version }}'
+        --yes
+    - name: >-
+        Commit the changelog updates for release
+        ${{ needs.pre-setup.outputs.git-tag }} in the local Git repo
+      run: >-
+        git commit -m
+        'Generate a change log entry for ${{
+            needs.pre-setup.outputs.git-tag
+        }}'
+    - name: Log the changelog commit
+      run: git show --color
+    - name: Create a changelog update patch from the last Git commit
+      run: >-
+        git format-patch
+        --output='${{ needs.pre-setup.outputs.changelog-patch-name }}'
+        -1 HEAD
+    - name: Verify that expected patch got created
+      run: ls -1 '${{ needs.pre-setup.outputs.changelog-patch-name }}'
+    - name: Save the package bump patch as a GHA artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: changelog
+        path: |
+          ${{ needs.pre-setup.outputs.changelog-patch-name }}
+          ${{ needs.pre-setup.outputs.changelog-draft-name-md }}
+          ${{ needs.pre-setup.outputs.changelog-draft-name-rst }}
+
+  build:
+    name: >-
+      📦 ${{ needs.pre-setup.outputs.git-tag }}
+      [mode: ${{
+        fromJSON(needs.pre-setup.outputs.is-untagged-devel)
+        && 'test' || ''
+      }}${{
+        fromJSON(needs.pre-setup.outputs.release-requested)
+        && 'release' || ''
+      }}${{
+        (
+          !fromJSON(needs.pre-setup.outputs.is-untagged-devel)
+          && !fromJSON(needs.pre-setup.outputs.release-requested)
+        ) && 'nightly' || ''
+      }}]
+    needs:
+    - build-changelog
+    - pre-setup  # transitive, for accessing settings
+
+    uses: tox-dev/workflow/.github/workflows/reusable-tox.yml@208490c75f7f6b81e2698cc959f24d264c462d57  # yamllint disable-line rule:line-length
+    with:
+      cache-key-for-dependency-files: >-
+        ${{ needs.pre-setup.outputs.cache-key-for-dep-files }}
+      check-name: Build dists under 🐍3.13
+      checkout-src-git-committish: >-
+        ${{ github.event.inputs.release-committish }}
+      checkout-src-git-fetch-depth: >-
+        ${{
+          fromJSON(needs.pre-setup.outputs.release-requested)
+          && 1
+          || 0
+        }}
+      job-dependencies-context: >-  # context for hooks
+        ${{ toJSON(needs) }}
+      python-version: 3.13
+      runner-vm-os: ubuntu-latest
+      timeout-minutes: 2
+      toxenv: build-dists
+      xfail: false
+
   lint:
-    uses: ./.github/workflows/reusable-linters.yml
+    name: 🧹 Linters${{ '' }}  # nest jobs under the same sidebar category
+    needs:
+    - build
+    - pre-setup  # transitive, for accessing settings
+
+    strategy:
+      matrix:
+        runner-vm-os:
+        - ubuntu-latest
+        python-version:
+        - 3.9
+        toxenv:
+        - pre-commit
+        - pre-commit-pep257
+        - metadata-validation
+        xfail:
+        - false
+      fail-fast: false
+
+    uses: tox-dev/workflow/.github/workflows/reusable-tox.yml@208490c75f7f6b81e2698cc959f24d264c462d57  # yamllint disable-line rule:line-length
+    with:
+      built-wheel-names: >-
+        ${{
+          matrix.toxenv == 'metadata-validation'
+          && needs.pre-setup.outputs.wheel-artifact-name
+          || ''
+        }}
+      cache-key-for-dependency-files: >-
+        ${{ needs.pre-setup.outputs.cache-key-for-dep-files }}
+      checkout-src-git-committish: >-
+        ${{ github.event.inputs.release-committish }}
+      checkout-src-git-fetch-depth: >-
+        ${{
+          fromJSON(needs.pre-setup.outputs.release-requested)
+          && 1
+          || 0
+        }}
+      dists-artifact-name: >-
+        ${{ needs.pre-setup.outputs.dists-artifact-name }}
+      post-toxenv-preparation-command: >-
+        ${{
+          matrix.toxenv == 'pre-commit'
+          && 'python -Im pre_commit install-hooks'
+          || ''
+        }}
+      python-version: >-
+        ${{ matrix.python-version }}
+      require-successful-codecov-uploads: >-
+        ${{
+          toJSON(
+          needs.pre-setup.outputs.upstream-repository-id
+          == github.repository_id
+          )
+        }}
+      runner-vm-os: >-
+        ${{ matrix.runner-vm-os }}
+      # NOTE: `pre-commit --show-diff-on-failure` and
+      # NOTE: `sphinxcontrib-spellcheck` with Git authors allowlist enabled
+      # NOTE: both depend on the presence of a Git repository.
+      source-tarball-name: >-
+        ${{
+          !contains(
+            fromJSON('["pre-commit", "spellcheck-docs"]'),
+            matrix.toxenv
+          )
+          && needs.pre-setup.outputs.sdist-artifact-name
+          || ''
+        }}
+      # NOTE: `pre-commit` and `sphinxcontrib-spellcheck` both depend on Git.
+      # NOTE: `linkcheck` does many network queries.
+      # NOTE: They may get slower due to network I/O, hence bigger timeout.
+      timeout-minutes: >-
+        ${{
+          matrix.toxenv == 'linkcheck-docs'
+          && 10
+          || (
+            contains(
+              fromJSON('["pre-commit", "spellcheck-docs"]'),
+              matrix.toxenv
+            )
+            && 4
+            || 2
+          )
+        }}
+      toxenv: >-
+        ${{ matrix.toxenv }}
+      xfail: >-
+        ${{
+          fromJSON(needs.pre-setup.outputs.is-yolo-mode)
+          || fromJSON(matrix.xfail)
+          || startsWith(matrix.toxenv, 'pre-commit-')
+        }}
+    secrets:
+      codecov-token: ${{ secrets.CODECOV_TOKEN }}
 
   tests:
-    if: >-  # https://twitter.com/webKnjaZ/status/1308803017001652225
-      github.event_name != 'create' ||
-      github.event.ref_type == 'tag'
-    runs-on: ${{ matrix.os }}
+    name: 🧪 Tests${{ '' }}  # nest jobs under the same sidebar category
+
+    needs:
+    - build
+    - pre-setup  # transitive, for accessing settings
+
     strategy:
-      fail-fast: true
+      fail-fast: >-  # ${{ runner.debug }} is unavailable in this context
+        ${{
+          fromJSON(needs.pre-setup.outputs.is-debug-mode)
+          && false
+          || true
+        }}
       matrix:
         python-version:
+        # NOTE: The latest and the lowest supported Pythons are prioritized
+        # NOTE: to improve the responsiveness. It's nice to see the most
+        # NOTE: important results first.
         - >-
           3.10
         - 3.9
-        os:
+        runner-vm-os:
         - ubuntu-24.04-arm
         - macos-15
         - windows-2025
         - ubuntu-22.04
         - macos-13
         - windows-2022
+        toxenv:
+        - py
+        xfail:
+        - false
 
-    continue-on-error: >-
-      ${{
-          contains(matrix.python-version, 'alpha')
-          && true
-          || false
-      }}
-    timeout-minutes: 7  # NOTE: default is 360 (6h)
-
-    env:
-      PY_COLORS: 1
-      TOXENV: python
-      TOX_PARALLEL_NO_SPINNER: 1
-
-    steps:
-    - name: >-
-        Log platform.platform()
-      run: >-
-        python -m platform
-    - name: >-
-        Log platform.version()
-      run: |
-        import platform
-        print(platform.version())
-      shell: python
-    - name: >-
-        Log platform.uname()
-      run: |
-        import platform
-        print(platform.uname())
-      shell: python
-    - name: >-
-        Log platform.release()
-      run: |
-        import platform
-        print(platform.release())
-      shell: python
-    - name: Windows system info
-      run: systeminfo
-      if: >-
-        startsWith(matrix.os, 'windows-')
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Pip cache
-      uses: actions/cache@v4
-      with:
-        path: >-
-          ${{
-            runner.os == 'Linux' &&
-            '~/.cache/pip'
-            || ''
-          }}${{
-            runner.os == 'macOS' &&
-            '~/Library/Caches/pip'
-            || ''
-          }}${{
-            runner.os == 'Windows' &&
-            '~\AppData\Local\pip\Cache'
-            || ''
-          }}
-        key: >-
-          ${{ runner.os }}-pip-${{ hashFiles('setup.cfg') }}-${{
-          hashFiles('setup.py') }}-${{ hashFiles('tox.ini') }}-${{
-          hashFiles('pyproject.toml') }}-${{
-          hashFiles('.pre-commit-config.yaml') }}-${{
-          hashFiles('pytest.ini') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-          ${{ runner.os }}-
-    - name: Install tox
-      run: >-
-        python -m
-        pip install
-        --upgrade
-        tox
-      # macOS-latest + CPython completes in 4s-1m26s
-      # macOS-11.0 + CPython completes in 3s-18s
-      # ubuntu-16.04 + CPython completes in 2s-8s
-      # ubuntu-16.04 + PyPy completes in 5s-16s
-      # ubuntu-18.04 + CPython completes in 3s-6s
-      # ubuntu-18.04 + PyPy completes in 4s-14s
-      # ubuntu-20.04 + CPython completes in 3s-8s
-      # ubuntu-20.04 + PyPy completes in 10s-15s
-      # windows-latest + CPython completes in 5s-25s
-      # windows-latest + PyPy completes in 22s-50s
-      # windows-2016 + CPython completes in 7s-24s
-      # windows-2016 + PyPy completes in 22s-41s
-      timeout-minutes: 2
-    - name: 'Initialize tox envs: ${{ matrix.env.TOXENV }}'
-      run: >-
-        python -m
-        tox
-        --parallel auto
-        --parallel-live
-        -vv
-        --skip-missing-interpreters false
-        --notest
-      # macOS-latest + CPython completes in 11s-1m40s
-      # macOS-11.0 + CPython completes in 14s-18s
-      # ubuntu-16.04 + CPython completes in 9s-16s
-      # ubuntu-16.04 + PyPy completes in 14s-21s
-      # ubuntu-18.04 + CPython completes in 9s-15s
-      # ubuntu-18.04 + PyPy completes in 16s-24s
-      # ubuntu-20.04 + CPython completes in 10s-12s
-      # ubuntu-20.04 + PyPy completes in 16s-24s
-      # windows-latest + CPython completes in 17s-31s
-      # windows-latest + PyPy completes in 37s-44s
-      # windows-2016 + CPython completes in 18s-26s
-      # windows-2016 + PyPy completes in 37s-49s
-      timeout-minutes: 2
-    - name: Test with tox
-      run: >-
-        python -m
-        tox
-        --parallel auto
-        --parallel-live
-        -vv
-      # macOS-latest + CPython completes in 9-2m12s
-      # macOS-11.0 + CPython completes in 8s-1m13s
-      # ubuntu-16.04 + CPython completes in 8s-13s
-      # ubuntu-16.04 + PyPy completes in 13s-16s
-      # ubuntu-18.04 + CPython completes in 8s-13s
-      # ubuntu-18.04 + PyPy completes in 13s-15s
-      # ubuntu-20.04 + CPython completes in 8s-14s
-      # ubuntu-20.04 + PyPy completes in 13s-16s
-      # windows-latest + CPython completes in 7s-9s
-      # windows-latest + PyPy completes in 13s-24s
-      # windows-2016 + CPython completes in 7s-11s
-      # windows-2016 + PyPy completes in 13s-20s
-      timeout-minutes: 3
-    - name: Dump test logs on failure
-      if: failure()
-      shell: bash
-      run: |
-        for log in magicbus/test/*.log
-        do
-            echo Dumping "'${log}'"...
-            cat "${log}"
-        done
+    uses: tox-dev/workflow/.github/workflows/reusable-tox.yml@208490c75f7f6b81e2698cc959f24d264c462d57  # yamllint disable-line rule:line-length
+    with:
+      built-wheel-names: >-
+        ${{ needs.pre-setup.outputs.wheel-artifact-name }}
+      cache-key-for-dependency-files: >-
+        ${{ needs.pre-setup.outputs.cache-key-for-dep-files }}
+      check-name: >-
+        🧪 🐍${{
+          matrix.python-version
+        }} @ ${{
+          matrix.runner-vm-os
+        }}
+      dists-artifact-name: >-
+        ${{ needs.pre-setup.outputs.dists-artifact-name }}
+      job-dependencies-context: >-  # context for hooks
+        ${{ toJSON(needs) }}
+      python-version: >-
+        ${{ matrix.python-version }}
+      require-successful-codecov-uploads: >-
+        ${{
+          toJSON(
+          needs.pre-setup.outputs.upstream-repository-id
+          == github.repository_id
+          )
+        }}
+      runner-vm-os: >-
+        ${{ matrix.runner-vm-os }}
+      source-tarball-name: >-
+        ${{ needs.pre-setup.outputs.sdist-artifact-name }}
+      timeout-minutes: 7
+      toxenv: >-
+        ${{ matrix.toxenv }}
+      # tox-provision-args: >-
+      #   --force-dep '...'
+      tox-run-posargs: >-
+        --cov-report=xml:.tox/.tmp/.test-results/pytest-${{
+          matrix.python-version
+        }}/cobertura.xml
+        --junitxml=.tox/.tmp/.test-results/pytest-${{
+          matrix.python-version
+        }}/test.xml
+      tox-rerun-posargs: >-
+        --no-cov
+        -vvvvv
+        --lf
+      xfail: >-
+        ${{
+          fromJSON(needs.pre-setup.outputs.is-yolo-mode)
+          || fromJSON(matrix.xfail)
+        }}
+    secrets:
+      codecov-token: ${{ secrets.CODECOV_TOKEN }}
 
   check:  # This job does nothing and is only used for the branch protection
     if: always()
 
     needs:
     - lint
+    - pre-setup  # transitive, for accessing settings
     - tests
 
     runs-on: ubuntu-latest
+
+    timeout-minutes: 1
 
     steps:
     - name: Decide whether the needed jobs succeeded or failed
       uses: re-actors/alls-green@release/v1
       with:
-        jobs: ${{ toJSON(needs) }}
-
-  publish:
-    name: Validate metadata and optionally publish 🐍📦 to PyPI
-    needs:
-    - check
-    runs-on: ${{ matrix.os }}
-    strategy:
-      # NOTE: Even though it's one job, it's easier to keep the params in one
-      # NOTE: place using a matrix:
-      matrix:
-        python-version:
-        - 3.9
-        os:
-        - ubuntu-latest
-
-    env:
-      PY_COLORS: 1
-      TOXENV: build-dists,metadata-validation
-      TOX_PARALLEL_NO_SPINNER: 1
-
-    steps:
-    - uses: actions/checkout@master
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Pip cache
-      uses: actions/cache@v4
-      with:
-        path: >-
+        allowed-failures: >-
           ${{
-            runner.os == 'Linux' &&
-            '~/.cache/pip'
-            || ''
-          }}${{
-            runner.os == 'macOS' &&
-            '~/Library/Caches/pip'
-            || ''
-          }}${{
-            runner.os == 'Windows' &&
-            '~\AppData\Local\pip\Cache'
+            fromJSON(needs.pre-setup.outputs.is-yolo-mode)
+            && 'lint, tests'
             || ''
           }}
-        key: >-
-          ${{ runner.os }}-pip-${{ hashFiles('setup.cfg') }}-${{
-          hashFiles('setup.py') }}-${{ hashFiles('tox.ini') }}-${{
-          hashFiles('pyproject.toml') }}-${{
-          hashFiles('.pre-commit-config.yaml') }}-${{
-          hashFiles('pytest.ini') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-          ${{ runner.os }}-
-    - name: Install tox
-      run: >-
-        python -m
-        pip install
-        --upgrade
-        tox
-    - name: 'Initialize tox envs: ${{ matrix.env.TOXENV }}'
-      run: >-
-        python -m
-        tox
-        --parallel auto
-        --parallel-live
-        -vv
-        --skip-missing-interpreters false
-        --notest
-    - name: Build dists with tox
-      run: >-
-        python -m
-        tox
-        --parallel auto
-        --parallel-live
-        -vv
-    - name: Publish to pypi.org
-      if: >-  # "create" workflows run separately from "push" & "pull_request"
-        github.event_name == 'create' &&
-        github.event.ref_type == 'tag'
+        jobs: ${{ toJSON(needs) }}
+
+  publish-pypi:
+    name: >-
+      📦
+      Publish ${{ needs.pre-setup.outputs.git-tag }} to PyPI
+    needs:
+    - check
+    - pre-setup  # transitive, for accessing settings
+    if: >-
+      always()
+      && needs.check.result == 'success'
+      && fromJSON(needs.pre-setup.outputs.release-requested)
+      && needs.pre-setup.outputs.upstream-repository-id == github.repository_id
+
+    runs-on: ubuntu-latest
+
+    timeout-minutes: 2  # docker+network are slow sometimes
+
+    environment:
+      name: pypi
+      url: >-
+        https://pypi.org/project/${{ env.PROJECT_NAME }}/${{
+          needs.pre-setup.outputs.dist-version
+        }}
+
+    permissions:
+      contents: read  # This job doesn't need to `git push` anything
+      id-token: write  # PyPI Trusted Publishing (OIDC)
+
+    steps:
+    - name: Download all the dists
+      uses: actions/download-artifact@v4
+      with:
+        name: >-
+          ${{ needs.pre-setup.outputs.dists-artifact-name }}
+        path: dist/
+    - name: >-
+        📦
+        Publish ${{ needs.pre-setup.outputs.git-tag }} to PyPI
+        🔏
       uses: pypa/gh-action-pypi-publish@release/v1
+
+  publish-testpypi:
+    name: >-
+      📦
+      Publish ${{ needs.pre-setup.outputs.git-tag }} to TestPyPI
+    needs:
+    - check
+    - pre-setup  # transitive, for accessing settings
+    if: >-
+      always()
+      && needs.check.result == 'success'
+      && (
+        fromJSON(needs.pre-setup.outputs.is-untagged-devel)
+        || fromJSON(needs.pre-setup.outputs.release-requested)
+      )
+      && needs.pre-setup.outputs.upstream-repository-id == github.repository_id
+      && fromJSON(needs.pre-setup.outputs.publishing-to-testpypi-enabled)
+
+    runs-on: ubuntu-latest
+
+    timeout-minutes: 2  # docker+network are slow sometimes
+
+    environment:
+      name: testpypi
+      url: >-
+        https://test.pypi.org/project/${{ env.PROJECT_NAME }}/${{
+          needs.pre-setup.outputs.dist-version
+        }}
+
+    permissions:
+      contents: read  # This job doesn't need to `git push` anything
+      id-token: write  # PyPI Trusted Publishing (OIDC)
+
+    steps:
+    - name: Download all the dists
+      uses: actions/download-artifact@v4
+      with:
+        name: >-
+          ${{ needs.pre-setup.outputs.dists-artifact-name }}
+        path: dist/
+    - name: >-
+        📦
+        Publish ${{ needs.pre-setup.outputs.git-tag }} to TestPyPI
+        🔏
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository-url: https://test.pypi.org/legacy/
+
+  post-release-repo-update:
+    name: >-
+      🏷️
+      Publish post-release Git tag
+      for ${{ needs.pre-setup.outputs.git-tag }}
+    needs:
+    - publish-pypi
+    - pre-setup  # transitive, for accessing settings
+    if: >-
+      always()
+      && needs.publish-pypi.result == 'success'
+
+    runs-on: ubuntu-latest
+
+    timeout-minutes: 1
+
+    outputs:
+      pull_request_url: ${{ steps.pr.outputs.pull_request_url }}
+
+    permissions:
+      contents: write  # Mandatory for `git push` to work
+      pull-requests: write
+
+    steps:
+    - name: Fetch the src snapshot  # IMPORTANT: Must be before the tag check
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 2
+        ref: ${{ github.event.inputs.release-committish }}
+    - name: >-
+        Check if the requested tag ${{ needs.pre-setup.outputs.git-tag }}
+        is present and is pointing at the required commit ${{
+          github.event.inputs.release-committish
+        }}
+      id: existing-remote-tag-check
+      run: |
+        set -eEuo pipefail
+
+        REMOTE_TAGGED_COMMIT_SHA="$(
+          git ls-remote --tags --refs $(git remote get-url origin) '${{
+            needs.pre-setup.outputs.git-tag
+          }}' | awk '{print $1}'
+        )"
+
+        # NOTE: Since we're making a new change log commit on top of the one
+        # NOTE: that is the release workflow trigger, it'll be the one that's
+        # NOTE: tagged if the workflow run succeeded previously. So we need to
+        # NOTE: grab its parent for comparison, since new workflow runs will
+        # NOTE: generate a new changelog update commit and while its diff and
+        # NOTE: the parent may be the same, the metadata like the timestamp
+        # NOTE: would differ causing it to have a different commit SHA. But the
+        # NOTE: parent would be immutable so that's what we'll compare to the
+        # NOTE: release committish.
+        if [[ "${REMOTE_TAGGED_COMMIT_SHA}" == '' ]]
+        then
+          LAST_HUMAN_COMMIT_SHA=
+        else
+          LAST_HUMAN_COMMIT_SHA=$(git rev-parse "${REMOTE_TAGGED_COMMIT_SHA}"^)
+        fi
+
+        RELEASE_REQUEST_COMMIT_SHA=$(git rev-parse '${{
+          github.event.inputs.release-committish || 'HEAD'
+        }}')
+
+        if [[ "${LAST_HUMAN_COMMIT_SHA}" == "${RELEASE_REQUEST_COMMIT_SHA}" ]]
+        then
+          echo "already-exists=true" >> "${GITHUB_OUTPUT}"
+        fi
+
+    - name: Setup git user as [bot]
+      if: steps.existing-remote-tag-check.outputs.already-exists != 'true'
+      # Refs:
+      # * https://github.community/t/github-actions-bot-email-address/17204/6
+      # * https://github.com/actions/checkout/issues/13#issuecomment-724415212
+      uses: fregante/setup-git-user@v2
+    - name: Fetch the GHA artifact with the version patch
+      if: steps.existing-remote-tag-check.outputs.already-exists != 'true'
+      uses: actions/download-artifact@v4
+      with:
+        name: changelog
+
+    - name: Apply the changelog patch
+      if: steps.existing-remote-tag-check.outputs.already-exists != 'true'
+      run: git am '${{ needs.pre-setup.outputs.changelog-patch-name }}'
+      shell: bash
+
+    - name: >-
+        Create a local 'release/${{
+          needs.pre-setup.outputs.dist-version
+        }}' branch
+      if: steps.existing-remote-tag-check.outputs.already-exists != 'true'
+      run: >-
+        git checkout -b 'release/${{
+          needs.pre-setup.outputs.dist-version
+        }}'
+
+    - name: >-
+        🏷️
+        Tag the release in the local Git repo
+        as ${{ needs.pre-setup.outputs.git-tag }}
+      if: steps.existing-remote-tag-check.outputs.already-exists != 'true'
+      run: >-
+        git tag
+        -m '${{ needs.pre-setup.outputs.git-tag }}'
+        -m 'Published at https://pypi.org/project/${{
+          env.PROJECT_NAME
+        }}/${{
+          needs.pre-setup.outputs.dist-version
+        }}'
+        -m 'This release has been produced by the following workflow run: ${{
+          github.server_url
+        }}/${{
+          github.repository
+        }}/actions/runs/${{
+          github.run_id
+        }}'
+        '${{ needs.pre-setup.outputs.git-tag }}'
+
+    - name: >-
+        🏷️
+        Push ${{ needs.pre-setup.outputs.git-tag }} tag corresponding
+        to the just published release back to GitHub
+      if: steps.existing-remote-tag-check.outputs.already-exists != 'true'
+      run: >-
+        git push --atomic origin
+        'release/${{ needs.pre-setup.outputs.dist-version }}'
+        '${{ needs.pre-setup.outputs.git-tag }}'
+
+    - name: pull-request-action
+      id: pr
+      uses: vsoch/pull-request-action@1.1.1
+      env:
+        BRANCH_PREFIX: ''
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        PULL_REQUEST_BODY: >-
+          Automated changelog generation with the version
+          ${{ needs.pre-setup.outputs.dist-version }}.
+        PULL_REQUEST_BRANCH: ${{ github.event.repository.default_branch }}
+        PULL_REQUEST_FROM_BRANCH: >-
+          release/${{ needs.pre-setup.outputs.dist-version }}
+        PULL_REQUEST_TITLE: >-
+          🔖 Release ${{ needs.pre-setup.outputs.git-tag }}
+    - name: Log the pull request details
+      run: |
+        echo "PR number: ${{ steps.pr.outputs.pull_request_number }}"
+        echo "PR URL: ${{ steps.pr.outputs.pull_request_url }}"
+
+  slsa-provenance:
+    name: >-
+      🔏
+      Save in-toto SLSA provenance as a GitHub workflow artifact for
+      ${{ needs.pre-setup.outputs.git-tag }}
+    needs:
+    - build
+    - post-release-repo-update
+    - pre-setup  # transitive, for accessing settings
+
+    permissions:
+      actions: read
+      id-token: write
+      contents: write
+
+    # Can't pin with hash due to how this workflow works.
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0  # yamllint disable-line rule:line-length
+    with:
+      base64-subjects: >-
+        ${{
+          fromJSON(
+            needs.build.outputs.steps
+          ).tox-run.outputs.combined-dists-base64-encoded-sha256-hash
+        }}
+
+  publish-github-attestations:
+    name: >-
+      🔏
+      Produce a GitHub-native Attestations for
+      ${{ needs.pre-setup.outputs.git-tag }}
+    needs:
+    - post-release-repo-update
+    - pre-setup  # transitive, for accessing settings
+    if: >-
+      always()
+      && needs.post-release-repo-update.result == 'success'
+    runs-on: ubuntu-latest
+
+    timeout-minutes: 3
+
+    permissions:
+      attestations: write  # IMPORTANT: needed to persist attestations
+      contents: read
+      id-token: write  # IMPORTANT: mandatory for Sigstore signing
+
+    steps:
+    - name: Download all the dists
+      uses: actions/download-artifact@v4
+      with:
+        name: >-
+          ${{ needs.pre-setup.outputs.dists-artifact-name }}
+        path: dist/
+
+    - name: >-
+        🔏
+        Generate provenance attestations for the dists
+      uses: actions/attest-build-provenance@v1
+      with:
+        subject-path: |
+          dist/${{ needs.pre-setup.outputs.sdist-artifact-name }}
+          dist/${{ needs.pre-setup.outputs.wheel-artifact-name }}
+
+  publish-github-release:
+    name: >-
+      🏷️
+      Publish a GitHub Release for
+      ${{ needs.pre-setup.outputs.git-tag }}
+    needs:
+    - post-release-repo-update
+    - pre-setup  # transitive, for accessing settings
+    - publish-github-attestations
+    - slsa-provenance
+    if: >-
+      always()
+      && needs.post-release-repo-update.result == 'success'
+    runs-on: ubuntu-latest
+
+    timeout-minutes: 3
+
+    permissions:
+      contents: write
+      discussions: write
+      id-token: write  # IMPORTANT: mandatory for Sigstore signing
+
+    steps:
+    - name: Download all the dists
+      uses: actions/download-artifact@v4
+      with:
+        name: >-
+          ${{ needs.pre-setup.outputs.dists-artifact-name }}
+        path: dist/
+    - name: Download SLSA provenance in-toto files
+      uses: actions/download-artifact@v4
+      with:
+        name: >-
+          ${{ needs.slsa-provenance.outputs.provenance-name }}
+        path: >-
+          ${{ needs.slsa-provenance.outputs.provenance-name }}
+    - name: Fetch the GHA artifact with the version patch
+      uses: actions/download-artifact@v4
+      with:
+        name: changelog
+
+    - name: Figure out if the current version is a pre-release
+      id: release-maturity-check
+      run: |
+        from os import environ
+        from pathlib import Path
+
+        release_version = '${{
+          needs.pre-setup.outputs.dist-version
+        }}'
+
+        FILE_APPEND_MODE = 'a'
+
+        is_pre_release = any(
+            hint_char in release_version
+            for hint_char in {'a', 'b', 'd', 'r'}
+        )
+
+        with Path(environ['GITHUB_OUTPUT']).open(
+                mode=FILE_APPEND_MODE,
+        ) as outputs_file:
+            print(
+                f'is-pre-release={is_pre_release !s}'.lower(),
+                file=outputs_file,
+            )
+      shell: python
+    - name: Prepare the release notes file for the GitHub Releases
+      run: |
+        echo '## 📝 Release notes' | tee -a release-notes.md
+        echo | tee -a release-notes.md
+        echo | tee -a release-notes.md
+        echo '📦 PyPI page: https://pypi.org/project/${{
+          env.PROJECT_NAME
+        }}/${{
+          needs.pre-setup.outputs.dist-version
+        }}' | tee -a release-notes.md
+        echo | tee -a release-notes.md
+        echo | tee -a release-notes.md
+        echo '${{
+          steps.release-maturity-check.outputs.is-pre-release == 'true'
+          && format(
+            '🚧 {0} is marked as a pre-release.',
+            needs.pre-setup.outputs.git-tag
+          )
+          || format(
+            '🌱 {0} is marked as a stable release.',
+            needs.pre-setup.outputs.git-tag
+          )
+        }}' | tee -a release-notes.md
+        echo | tee -a release-notes.md
+        echo | tee -a release-notes.md
+        echo '🔗 This release has been produced by ' \
+        'the following workflow run: ${{
+          github.server_url
+        }}/${{
+          github.repository
+        }}/actions/runs/${{
+          github.run_id
+        }}' | tee -a release-notes.md
+        echo | tee -a release-notes.md
+        echo | tee -a release-notes.md
+        cat '${{
+            needs.pre-setup.outputs.changelog-draft-name-md
+        }}' | tee -a release-notes.md
+      shell: bash
+
+    - name: Sign the dists with Sigstore
+      uses: sigstore/gh-action-sigstore-python@v3.0.0
+      with:
+        inputs: >-
+          dist/${{ needs.pre-setup.outputs.sdist-artifact-name }}
+          dist/${{ needs.pre-setup.outputs.wheel-artifact-name }}
+
+    - name: >-
+        Publish a GitHub Release for
+        ${{ needs.pre-setup.outputs.git-tag }}
+        with Sigstore-signed artifacts
+      uses: ncipollo/release-action@v1
+      with:
+        allowUpdates: false
+        artifactErrorsFailBuild: false
+        artifacts: |
+          dist/${{ needs.pre-setup.outputs.sdist-artifact-name }}
+          dist/${{ needs.pre-setup.outputs.sdist-artifact-name }}.sigstore.json
+          dist/${{ needs.pre-setup.outputs.wheel-artifact-name }}
+          dist/${{ needs.pre-setup.outputs.wheel-artifact-name }}.sigstore.json
+          ${{ needs.slsa-provenance.outputs.provenance-name }}/*
+        artifactContentType: raw  # Because whl and tgz are of different types
+        bodyFile: release-notes.md
+        discussionCategory: Announcements
+        draft: false
+        name: ${{ needs.pre-setup.outputs.git-tag }}
+        omitBodyDuringUpdate: true
+        omitName: false
+        omitNameDuringUpdate: true
+        omitPrereleaseDuringUpdate: true
+        prerelease: ${{ steps.release-maturity-check.outputs.is-pre-release }}
+        removeArtifacts: false
+        replacesArtifacts: false
+        tag: ${{ needs.pre-setup.outputs.git-tag }}
+        token: ${{ secrets.GITHUB_TOKEN }}
 
 ...
