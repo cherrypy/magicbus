@@ -45,6 +45,7 @@ params = dict(
     extras_require={
         'testing': [
             'pytest',
+            'pytest-cov',
             'pytest-xdist',
         ],
         'docs': [
