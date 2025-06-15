@@ -50,6 +50,7 @@ params = dict(
         ],
         'docs': [
             'sphinx',
+            'sphinxcontrib-towncrier',
             'jaraco.packaging>=3.2',
             'rst.linker>=1.9',
         ],
