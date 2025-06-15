@@ -31,10 +31,10 @@ jobs:
         os:
         - ubuntu-24.04-arm
         - macos-15
-        - windows-2022
+        - windows-2025
         - ubuntu-22.04
         - macos-13
-        - windows-2019
+        - windows-2022
 
     continue-on-error: >-
       ${{
