@@ -46,6 +46,7 @@ params = dict(
         'testing': [
             'collective.checkdocs',
             'pytest',
+            'pytest-xdist',
         ],
         'docs': [
             'sphinx',
