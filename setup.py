@@ -24,6 +24,7 @@ params = dict(
     author_email='team@cherrypy.dev',
     description=description or name,
     long_description=long_description,
+    long_description_content_type='text/x-rst',
     url='https://github.com/cherrypy/' + name,
     project_urls={
         'Tidelift: funding':
