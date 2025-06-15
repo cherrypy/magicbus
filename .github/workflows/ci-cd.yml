@@ -642,7 +642,7 @@ jobs:
         ${{
           fromJSON(needs.pre-setup.outputs.is-yolo-mode)
           || fromJSON(matrix.xfail)
-          || startsWith(matrix.toxenv, 'pre-commit-')
+          || startsWith(matrix.toxenv, 'pre-commit')
         }}
     secrets:
       codecov-token: ${{ secrets.CODECOV_TOKEN }}
