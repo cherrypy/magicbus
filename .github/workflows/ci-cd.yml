@@ -31,8 +31,8 @@ jobs:
         os:
         - ubuntu-24.04-arm
         - ubuntu-22.04
-        - macOS-11.0
-        - macOS-latest
+        - macos-15
+        - macos-13
         - windows-latest
         - windows-2016
 
