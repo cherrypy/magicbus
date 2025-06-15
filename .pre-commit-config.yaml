@@ -37,7 +37,7 @@ repos:
         exclude: magicbus/test
 
 -   repo: https://github.com/Lucas-C/pre-commit-hooks.git
-    rev: v1.1.12
+    rev: v1.5.5
     hooks:
     -   id: remove-tabs
 
