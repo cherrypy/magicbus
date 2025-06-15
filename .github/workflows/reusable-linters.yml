@@ -18,8 +18,9 @@ jobs:
         os:
         - ubuntu-latest
         toxenv:
-        - lint
         - build-dists
+        - pre-commit
+        - pre-commit-pep257
 
     env:
       PY_COLORS: 1
