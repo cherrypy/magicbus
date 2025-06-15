@@ -1,0 +1,36 @@
+---
+# yamllint disable rule:truthy
+
+codecov:
+  bot: codecov
+  notify:
+    require_ci_to_pass: yes
+
+  token: >-  # notsecret  # repo-scoped, upload-only, stability in fork PRs
+    1d0784c4-b429-4f01-b15e-388adaae0153
+
+coverage:
+  precision: 2
+  round: down
+  range: 70...100
+
+  status:
+    # Only consider coverage of the code snippet changed in PR
+    project: no
+    patch: yes
+    changes: no
+
+parsers:
+  gcov:
+    branch_detection:
+      conditional: yes
+      loop: yes
+      method: no
+      macro: no
+
+comment:
+  layout: header, diff
+  behavior: default
+  require_changes: no
+
+...
