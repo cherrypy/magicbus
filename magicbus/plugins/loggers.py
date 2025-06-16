@@ -37,13 +37,13 @@ class StreamLogger(SimplePlugin):
 
 class StdoutLogger(StreamLogger):
 
-    def __init__(self, bus, level=None, format=None, encoding=None):
+    def __init__(self, bus, level=None, format=None, encoding='utf-8'):
         StreamLogger.__init__(self, bus, sys.stdout, level, format, encoding)
 
 
 class StderrLogger(StreamLogger):
 
-    def __init__(self, bus, level=None, format=None, encoding=None):
+    def __init__(self, bus, level=None, format=None, encoding='utf-8'):
         StreamLogger.__init__(self, bus, sys.stderr, level, format, encoding)
 
 
