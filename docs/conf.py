@@ -13,8 +13,8 @@ extensions = [
 master_doc = 'index'
 
 intersphinx_mapping = {
-    'cheroot': ('https://cheroot.cherrypy.org/en/latest/', None),
-    'cherrypy': ('https://docs.cherrypy.org/en/latest/', None),
+    'cheroot': ('https://cheroot.cherrypy.dev/en/latest/', None),
+    'cherrypy': ('https://docs.cherrypy.dev/en/latest/', None),
     'python': ('https://docs.python.org/3', None),
     'python2': ('https://docs.python.org/2', None),
 }
