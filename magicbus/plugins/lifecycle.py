@@ -44,10 +44,10 @@ class ThreadWait(plugins.SimplePlugin):
 
     def EXIT(self):
         # Waiting for ALL child threads to finish is necessary on OS X.
-        # See http://www.cherrypy.org/ticket/581.
+        # See https://github.com/cherrypy/cherrypy/issues/581.
         # It's also good to let them all shut down before allowing
         # the main thread to call atexit handlers.
-        # See http://www.cherrypy.org/ticket/751.
+        # See https://github.com/cherrypy/cherrypy/issues/751.
         self.bus.log('Waiting for child threads to terminate...')
         curthread = threading.currentThread()
         for t in threading.enumerate():
