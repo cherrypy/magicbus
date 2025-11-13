@@ -16,7 +16,7 @@ else:
     except AttributeError:
         max_files = 1024
 
-if hasattr(threading.currentThread(), "is_alive"):
+if hasattr(threading.currentThread(), 'is_alive'):
     is_alive = lambda t: t.is_alive()
 else:
     is_alive = lambda t: t.isAlive()
