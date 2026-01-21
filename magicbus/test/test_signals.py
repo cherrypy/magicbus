@@ -98,6 +98,7 @@ def test_SIGHUP_daemonized(pidfile, daemon_process_pid, kill, SIGHUP, SIGTERM):
     kill(daemon_process_pid, SIGHUP)
 
     # Give the server some time to restart
+    pidfile.join()
     time.sleep(1)
     for _ in range(6):
         new_pid = pidfile.wait(5)
