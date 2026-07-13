@@ -37,11 +37,11 @@ repos:
         exclude: magicbus/test
 
 -   repo: https://github.com/Lucas-C/pre-commit-hooks.git
-    rev: v1.5.5
+    rev: v1.5.6
     hooks:
     -   id: remove-tabs
 
 -   repo: https://github.com/Lucas-C/pre-commit-hooks-lxml.git
-    rev: v1.1.0
+    rev: v1.1.1
     hooks:
     -   id: forbid-html-img-without-alt-text
