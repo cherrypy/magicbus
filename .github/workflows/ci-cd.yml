@@ -672,10 +672,10 @@ jobs:
         - 3.9
         runner-vm-os:
         - ubuntu-24.04-arm
-        - macos-15
+        - macos-26
         - windows-2025
         - ubuntu-22.04
-        - macos-13
+        - macos-26-intel
         - windows-2022
         toxenv:
         - py
