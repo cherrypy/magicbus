@@ -16,6 +16,11 @@ else:
     except AttributeError:
         max_files = 1024
 
+if hasattr(threading.currentThread(), 'is_alive'):
+    is_alive = lambda t: t.is_alive()
+else:
+    is_alive = lambda t: t.isAlive()
+
 from magicbus import plugins
 
 
@@ -44,8 +49,12 @@ class ThreadWait(plugins.SimplePlugin):
         # the main thread to call atexit handlers.
         # See https://github.com/cherrypy/cherrypy/issues/751.
         self.bus.log('Waiting for child threads to terminate...')
+        curthread = threading.currentThread()
         for t in threading.enumerate():
-            if t == threading.current_thread() or not t.is_alive():
+            if t is curthread:
+                continue
+
+            if not is_alive(t):
                 continue
 
             # Note that any dummy (external) threads are always daemonic.
