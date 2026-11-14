@@ -1,4 +1,4 @@
-@~/.claude/ansible/context.md
-@~/.claude/ansible/pylibssh/context.md
+@~/.claude/cherrypy/context.md
+@~/.claude/cherrypy/magicbus/context.md
 @AGENTS.md
 @CLAUDE.local.md

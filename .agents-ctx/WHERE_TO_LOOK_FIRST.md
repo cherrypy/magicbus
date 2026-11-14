@@ -14,20 +14,22 @@ Read, in this order:
 
 Here:
 
-1. `pyproject.toml` (build backend and metadata).
-2. `src/pylibsshext/<module>.pyx` and its `.pxd`; libssh
-   declarations live under `src/pylibsshext/includes/`.
-3. `tests/conftest.py` (e.g. the `sshd_addr` fixture), then
-   `tests/unit/<module>_test.py` or `tests/integration/`.
-4. As above.
-5. `.github/workflows/ci-cd.yml`, with the `reusable-*.yml`
-   workflows it calls.
+1. `setup.py` (the metadata) and `pyproject.toml` (the build
+   backend and `setuptools-scm`).
+2. `magicbus/<module>.py`, or `magicbus/plugins/<plugin>.py` for
+   the bundled plugins.
+3. `magicbus/test/__init__.py` -- the shared helpers, such as the
+   test web server and process wrappers -- then
+   `magicbus/test/test_<topic>.py`.
+4. As above, plus `toxfile.py` -- an in-tree tox plugin making
+   `build-dists` reproducible and reporting runtime details in CI.
+5. `.github/workflows/ci-cd.yml`, which delegates to
+   `tox-dev/workflow`'s `reusable-tox.yml`.
 
 Other places worth knowing:
 
-- `packaging/pep517_backend/` -- the in-tree PEP 517 build backend.
-- `packaging/rpm/` -- RPM packaging, used by `.packit.yml`.
-- `build-scripts/manylinux-container-image/` -- the manylinux
-  images wheels are built in.
+- `dependencies/lock-files/` -- the constraints the dist builds
+  are pinned to.
 - `docs/` -- Sphinx docs (RST); change notes go under
-  `docs/changelog-fragments/`.
+  `docs/changelog-fragments.d/`, and `CHANGES.rst` is generated
+  from them.

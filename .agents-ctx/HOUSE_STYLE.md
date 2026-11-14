@@ -25,8 +25,12 @@ whole tree pollute the context window up front.
 - No `tests/__init__.py`. Pytest must not promote the project
   root into `sys.path` via package discovery.
 
-Here: `setup.py` was dropped in `b08a7fd4`. The metadata lives in
-the PEP 621 `[project]` table of `pyproject.toml` (see
+Here: both are long-standing exceptions. The metadata still lives
+in an imperative `setup.py` -- moving it into a PEP 621
+`[project]` table is a separate, deliberate change, not something
+to do on the side. The test suite ships inside the package as
+`magicbus.test`, so `magicbus/test/__init__.py` exists by design
+and holds the shared test helpers (see
 [NAMING_THE_DUCKS.md](NAMING_THE_DUCKS.md)).
 
 ## Python
@@ -48,10 +52,9 @@ the PEP 621 `[project]` table of `pyproject.toml` (see
 - Sphinx-native docstrings -- `:param X:`, `:returns:`,
   `:raises X:`. Not Google, not Napoleon, not NumPy.
 
-Here: quotes and `parametrize` tuples are enforced by
-`.ruff.toml`, and the docstring style by `.darglint`. The Cython
-sources and the libssh C API they wrap have conventions of their
-own -- see [CYTHON_AND_LIBSSH.md](CYTHON_AND_LIBSSH.md).
+Here: only the quotes are enforced, by the
+`double-quote-string-fixer` pre-commit hook. The rest is kept up
+by hand -- the lint setup predates these conventions.
 
 ## Configuration files
 
