@@ -32,17 +32,6 @@ class Handler(WebHandler):
 service = WebService(handler_class=Handler)
 
 
-@pytest.mark.xfail(
-    sys.version_info[0] > 2, reason="""
-    Hangs under Python 3 because it loops too fast causing a race
-    condition in `magicbus.plugins.opsys.PIDFile.join()`.
-
-    Refs:
-    * https://github.com/cherrypy/magicbus/issues/7
-    * https://github.com/cherrypy/magicbus/pull/8
-    """,
-    run=False,
-)
 @pytest.mark.skipif(os.name != 'posix', reason='not on POSIX')
 def test_daemonize():
     # Spawn the process and wait, when this returns, the original process
